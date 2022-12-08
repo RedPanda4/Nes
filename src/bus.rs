@@ -11,13 +11,13 @@ impl Bus {
     //     Self { cpu: (), ram: [0; 64 * 1024] }
     // }
 
-    fn write(&mut self, addr: &u16, data: &u8) {
+    pub(crate) fn write(&mut self, addr: &u16, data: &u8) {
         if addr >= &0x000 && addr <= &0xFFFF {
             self.ram[*addr as usize] = data.clone()
         }
     }
 
-    fn read(&self, addr: &u16, mut b_read_only: bool) -> u8{
+    pub(crate) fn read(&self, addr: &u16, mut b_read_only: bool) -> u8{
         b_read_only = false;
 
         if addr >= &0x000 && addr <= &0xFFFF {
