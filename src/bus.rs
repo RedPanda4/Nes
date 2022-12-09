@@ -2,7 +2,7 @@ use crate::cpu_6502::Cpu6502;
 
 pub(crate) struct Bus {
     cpu: Cpu6502,
-    ram: [u8; 64 * 1024]
+    pub ram: [u8; 64 * 1024]
 }
 
 impl Bus {

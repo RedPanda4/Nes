@@ -5,14 +5,17 @@
   </component>
   <component name="CargoProjects">
     <cargoProject FILE="$PROJECT_DIR$/Cargo.toml" />
+    <cargoProject FILE="$USER_HOME$/OneDrive - Accenture/Documents/Rust/olcPixelGameEngine-rs-master/olcPixelGameEngine-rs-master/Cargo.toml" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="27040f51-d8a5-4115-a559-bd7c2843312e" name="Changes" comment="">
+    <list default="true" id="27040f51-d8a5-4115-a559-bd7c2843312e" name="Changes" comment="first">
+      <change afterPath="$PROJECT_DIR$/src/olcNes_Video1_6502.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Cargo.lock" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.toml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/bus.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/bus.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/cpu_6502.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/cpu_6502.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.rs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -45,15 +48,50 @@
   "keyToString": {
     "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
+    "last_opened_file_path": "C:/Users/tiago.costa.carvalho/OneDrive - Accenture/Documents/Rust/olcPixelGameEngine-rs-master/olcPixelGameEngine-rs-master/Cargo.toml",
     "org.rust.cargo.project.model.PROJECT_DISCOVERY": "true",
     "org.rust.disableDetachedFileInspectionC:/Users/tiago.costa.carvalho/IdeaProjects/NES/src/bus.rs": "true",
-    "project.structure.last.edited": "Project",
+    "project.structure.last.edited": "Global Libraries",
     "project.structure.proportion": "0.0",
-    "project.structure.side.proportion": "0.0",
-    "settings.editor.selected.configurable": "vcs.Git"
+    "project.structure.side.proportion": "0.2",
+    "settings.editor.selected.configurable": "language.rust.cargo.check"
   }
 }]]></component>
-  <component name="RunManager">
+  <component name="RunManager" selected="Cargo.Run">
+    <configuration name="Run example [olc_pixel_game_engine]" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
+      <option name="command" value="run --package olc_pixel_game_engine --example example" />
+      <option name="workingDirectory" value="file://$USER_HOME$/OneDrive - Accenture/Documents/Rust/olcPixelGameEngine-rs-master/olcPixelGameEngine-rs-master" />
+      <option name="channel" value="DEFAULT" />
+      <option name="requiredFeatures" value="true" />
+      <option name="allFeatures" value="false" />
+      <option name="emulateTerminal" value="false" />
+      <option name="withSudo" value="false" />
+      <option name="buildTarget" value="REMOTE" />
+      <option name="backtrace" value="SHORT" />
+      <envs />
+      <option name="isRedirectInput" value="false" />
+      <option name="redirectInputPath" value="" />
+      <method v="2">
+        <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="Run rustlings [rustlings]" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
+      <option name="command" value="run --package rustlings --bin rustlings" />
+      <option name="workingDirectory" value="file://$USER_HOME$/OneDrive - Accenture/Documents/Rust/rustlings-main" />
+      <option name="channel" value="DEFAULT" />
+      <option name="requiredFeatures" value="true" />
+      <option name="allFeatures" value="false" />
+      <option name="emulateTerminal" value="false" />
+      <option name="withSudo" value="false" />
+      <option name="buildTarget" value="REMOTE" />
+      <option name="backtrace" value="SHORT" />
+      <envs />
+      <option name="isRedirectInput" value="false" />
+      <option name="redirectInputPath" value="" />
+      <method v="2">
+        <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
+      </method>
+    </configuration>
     <configuration name="Run" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
       <option name="command" value="run --package NES --bin NES" />
       <option name="workingDirectory" value="file://$PROJECT_DIR$" />
@@ -71,8 +109,33 @@
         <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
       </method>
     </configuration>
+    <configuration name="Test integration_tests [rustlings]" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
+      <option name="command" value="test --package rustlings --test integration_tests" />
+      <option name="workingDirectory" value="file://$USER_HOME$/OneDrive - Accenture/Documents/Rust/rustlings-main" />
+      <option name="channel" value="DEFAULT" />
+      <option name="requiredFeatures" value="true" />
+      <option name="allFeatures" value="false" />
+      <option name="emulateTerminal" value="false" />
+      <option name="withSudo" value="false" />
+      <option name="buildTarget" value="REMOTE" />
+      <option name="backtrace" value="SHORT" />
+      <envs />
+      <option name="isRedirectInput" value="false" />
+      <option name="redirectInputPath" value="" />
+      <method v="2">
+        <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
+      </method>
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Cargo.Run example [olc_pixel_game_engine]" />
+        <item itemvalue="Cargo.Run rustlings [rustlings]" />
+        <item itemvalue="Cargo.Test integration_tests [rustlings]" />
+      </list>
+    </recent_temporary>
   </component>
   <component name="RustProjectSettings">
+    <option name="runExternalLinterOnTheFly" value="true" />
     <option name="toolchainHomeDirectory" value="$USER_HOME$/.cargo/bin" />
     <option name="version" value="2" />
   </component>
@@ -97,5 +160,9 @@
         </entry>
       </map>
     </option>
+  </component>
+  <component name="XSLT-Support.FileAssociations.UIState">
+    <expand />
+    <select />
   </component>
 </project>

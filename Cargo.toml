@@ -6,3 +6,4 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+olc_pixel_game_engine = { path = "C:/Users/tiago.costa.carvalho/OneDrive - Accenture/Documents/Rust/olcPixelGameEngine-rs-master/olcPixelGameEngine-rs-master" }

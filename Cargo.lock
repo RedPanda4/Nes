@@ -5,3 +5,19 @@ version = 3
 [[package]]
 name = "NES"
 version = "0.1.0"
+dependencies = [
+ "olc_pixel_game_engine",
+]
+
+[[package]]
+name = "cc"
+version = "1.0.77"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e9f73505338f7d905b19d18738976aae232eb46b8efc15554ffc56deb5d9ebe4"
+
+[[package]]
+name = "olc_pixel_game_engine"
+version = "0.5.0"
+dependencies = [
+ "cc",
+]
