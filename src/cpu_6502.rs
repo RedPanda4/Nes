@@ -2,7 +2,7 @@ use std::fs::read;
 use crate::bus::Bus;
 
 #[non_exhaustive]
-struct Flags6502;
+pub(crate) struct Flags6502;
 impl Flags6502 {
     pub  const C: u8 = (1 << 0);
     // Carry Bit
@@ -50,17 +50,17 @@ struct Instruction {
 
 pub(crate) struct Cpu6502 {
     // accumulator
-    a: u8,
+    pub(crate) a: u8,
     // register X
-    x: u8,
+    pub(crate) x: u8,
     // register y
-    y: u8,
+    pub(crate) y: u8,
     // program counter
-    pc: u16,
+    pub(crate) pc: u16,
     // stack pointer
-    sp: u8,
+    pub(crate) sp: u8,
     // status register
-    sr: u8,
+    pub(crate) sr: u8,
 
     // Bus
     bus: Box<Bus>,

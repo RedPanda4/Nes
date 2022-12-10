@@ -8,14 +8,13 @@
     <cargoProject FILE="$USER_HOME$/OneDrive - Accenture/Documents/Rust/olcPixelGameEngine-rs-master/olcPixelGameEngine-rs-master/Cargo.toml" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="27040f51-d8a5-4115-a559-bd7c2843312e" name="Changes" comment="first">
-      <change afterPath="$PROJECT_DIR$/src/olcNes_Video1_6502.rs" afterDir="false" />
+    <list default="true" id="27040f51-d8a5-4115-a559-bd7c2843312e" name="Changes" comment="CPU">
+      <change afterPath="$PROJECT_DIR$/src/olc_nes_video1_6502.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cargo.lock" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.lock" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.toml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/bus.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/bus.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/cpu_6502.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/cpu_6502.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/olcNes_Video1_6502.rs" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -44,19 +43,19 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "RunOnceActivity.OpenProjectViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "last_opened_file_path": "C:/Users/tiago.costa.carvalho/OneDrive - Accenture/Documents/Rust/olcPixelGameEngine-rs-master/olcPixelGameEngine-rs-master/Cargo.toml",
-    "org.rust.cargo.project.model.PROJECT_DISCOVERY": "true",
-    "org.rust.disableDetachedFileInspectionC:/Users/tiago.costa.carvalho/IdeaProjects/NES/src/bus.rs": "true",
-    "project.structure.last.edited": "Global Libraries",
-    "project.structure.proportion": "0.0",
-    "project.structure.side.proportion": "0.2",
-    "settings.editor.selected.configurable": "language.rust.cargo.check"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/tiago.costa.carvalho/OneDrive - Accenture/Documents/Rust/olcPixelGameEngine-rs-master/olcPixelGameEngine-rs-master/Cargo.toml&quot;,
+    &quot;org.rust.cargo.project.model.PROJECT_DISCOVERY&quot;: &quot;true&quot;,
+    &quot;org.rust.disableDetachedFileInspectionC:/Users/tiago.costa.carvalho/IdeaProjects/NES/src/bus.rs&quot;: &quot;true&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;Global Libraries&quot;,
+    &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
+    &quot;project.structure.side.proportion&quot;: &quot;0.2&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;language.rust.cargo.check&quot;
   }
-}]]></component>
+}</component>
   <component name="RunManager" selected="Cargo.Run">
     <configuration name="Run example [olc_pixel_game_engine]" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
       <option name="command" value="run --package olc_pixel_game_engine --example example" />
@@ -102,7 +101,9 @@
       <option name="withSudo" value="false" />
       <option name="buildTarget" value="REMOTE" />
       <option name="backtrace" value="SHORT" />
-      <envs />
+      <envs>
+        <env name="RUST_BACKTRACE" value="full" />
+      </envs>
       <option name="isRedirectInput" value="false" />
       <option name="redirectInputPath" value="" />
       <method v="2">
@@ -126,6 +127,12 @@
         <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
       </method>
     </configuration>
+    <list>
+      <item itemvalue="Cargo.Run" />
+      <item itemvalue="Cargo.Run example [olc_pixel_game_engine]" />
+      <item itemvalue="Cargo.Run rustlings [rustlings]" />
+      <item itemvalue="Cargo.Test integration_tests [rustlings]" />
+    </list>
     <recent_temporary>
       <list>
         <item itemvalue="Cargo.Run example [olc_pixel_game_engine]" />
@@ -148,6 +155,14 @@
       <option name="presentableId" value="Default" />
       <updated>1670258927824</updated>
     </task>
+    <task id="LOCAL-00001" summary="CPU">
+      <created>1670623118770</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1670623118770</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -160,6 +175,10 @@
         </entry>
       </map>
     </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="CPU" />
+    <option name="LAST_COMMIT_MESSAGE" value="CPU" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />
