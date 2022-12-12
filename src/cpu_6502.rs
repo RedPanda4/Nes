@@ -1,6 +1,8 @@
 use std::fs::read;
 use crate::bus::Bus;
 
+
+
 #[non_exhaustive]
 pub(crate) struct Flags6502;
 impl Flags6502 {
@@ -63,7 +65,7 @@ pub(crate) struct Cpu6502 {
     pub(crate) sr: u8,
 
     // Bus
-    bus: Box<Bus>,
+    pub(crate) bus: Bus,
 
     // // Flags
     // flags: Flags6502,
@@ -88,7 +90,7 @@ pub(crate) struct Cpu6502 {
 
 impl Cpu6502 {
 
-    pub fn new(bus: Box<Bus>) -> Self {
+    pub fn new() -> Self {
 
         // let loukup_table: Vec<Instruction> = vec![
         //     Instruction { name: "BRK".to_string(), operate: Cpu6502::brk, addresmode:Cpu6502::imm, cyles:7 }, Instruction { name: "ORA".to_string(), operate: Cpu6502::ora, addresmode:Cpu6502::izx, cyles:6 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:2 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:8 }, Instruction { name: "???".to_string(), operate: Cpu6502::nop, addresmode:Cpu6502::imp, cyles:3 }, Instruction { name: "ORA".to_string(), operate: Cpu6502::ora, addresmode:Cpu6502::zp0, cyles:3 }, Instruction { name: "ASL".to_string(), operate: Cpu6502::asl, addresmode:Cpu6502::zp0, cyles:5 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:5 }, Instruction { name: "PHP".to_string(), operate: Cpu6502::php, addresmode:Cpu6502::imp, cyles:3 }, Instruction { name: "ORA".to_string(), operate: Cpu6502::ora, addresmode:Cpu6502::imm, cyles:2 }, Instruction { name: "ASL".to_string(), operate: Cpu6502::asl, addresmode:Cpu6502::imp, cyles:2 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:2 }, Instruction { name: "???".to_string(), operate: Cpu6502::nop, addresmode:Cpu6502::imp, cyles:4 }, Instruction { name: "ORA".to_string(), operate: Cpu6502::ora, addresmode:Cpu6502::abs, cyles:4 }, Instruction { name: "ASL".to_string(), operate: Cpu6502::asl, addresmode:Cpu6502::abs, cyles:6 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:6 },
@@ -135,7 +137,7 @@ impl Cpu6502 {
             pc: 0x00,
             sp: 0x00,
             sr: 0x00,
-            bus,
+            bus: Bus::new(),
             // flags: (),
             fetched: 0x00,
             temp: 0x00,
@@ -147,13 +149,13 @@ impl Cpu6502 {
         }
     }
 
-    // Link this CPU to a communications bus
-    fn connect_bus(&mut self, n: Box<Bus>) {
-        self.bus = n;
-    }
+    // // Link this CPU to a communications bus
+    // pub (crate) fn connect_bus(&mut self, n: Box<Bus>) {
+    //     self.bus = Some(n);
+    // }
 
     // Perform one clock cycle's worth of update
-    fn clock(&mut self){
+    pub(crate) fn clock(&mut self){
         if self.cycles == 0 {
             self.opcode = self.read(self.pc);
             self.pc += 1;
@@ -172,7 +174,7 @@ impl Cpu6502 {
     }
 
     // Reset Interrupt - Forces CPU into known state
-    fn reset(&mut self){
+    pub(crate) fn reset(&mut self){
         self.a = 0;
         self.x = 0;
         self.y = 0;
@@ -192,7 +194,7 @@ impl Cpu6502 {
         self.cycles = 8;
     }
     // Interrupt Request - Executes an instruction at a specific location
-    fn irq(&mut self){
+    pub(crate) fn irq(&mut self){
         if self.GetFlag(Flags6502::I) == 0 {
             self.write(&(0x0100 + self.sp as u16), &(((self.pc >> 8) & 0x00FF) as u8));
             self.sp -= 1;
@@ -215,7 +217,7 @@ impl Cpu6502 {
 
     }
     // Non-Maskable Interrupt Request - As above, but cannot be disabled
-    fn nmi(&mut self){
+    pub(crate) fn nmi(&mut self){
         self.write(&(0x0100 + self.sp as u16), &(((self.pc >> 8) & 0x00FF) as u8));
         self.sp -= 1;
         self.write(&(0x0100 + self.sp as u16), &((self.pc & 0x00FF) as u8));
@@ -237,8 +239,9 @@ impl Cpu6502 {
 
     ///////////////////////////////////////////////////////////////////////////////
     // BUS CONNECTIVITY
-    fn read(&self, addre: u16) -> u8 {
+    pub(crate) fn read(&self, addre: u16) -> u8 {
         self.bus.read(&addre, false)
+
     }
 
     fn write(&mut self, addre: &u16, data: &u8) {
@@ -420,10 +423,10 @@ impl Cpu6502 {
 
         if ptr_lo == 0x00FF // Simulate page boundary hardware bug
         {
-            self.addr_abs = ((self.read(ptr & 0xFF00) << 8) | self.read(ptr + 0)) as u16 ;
+            self.addr_abs = ((self.read(ptr & 0xFF00) as u16) << 8) | (self.read(ptr + 0) as u16) ;
         } else // Behave normally
         {
-            self.addr_abs = ((self.read(ptr + 1) << 8) | self.read(ptr + 0)) as u16;
+            self.addr_abs = ((self.read(ptr + 1) as u16) << 8) | (self.read(ptr + 0) as u16);
         }
 
         return 0;
@@ -1381,6 +1384,12 @@ impl Cpu6502 {
         return 0;
     }
 
+///////////////////////////////////////////////////////////////////////////////
+// HELPER FUNCTIONS
+
+    pub(crate) fn complete(&self) -> bool {
+        return self.cycles == 0;
+    }
 
 
 }
