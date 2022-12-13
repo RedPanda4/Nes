@@ -1,26 +1,25 @@
-use std::fs::read;
 use crate::bus::Bus;
-
-
+use std::collections::HashMap;
+use std::ops::Add;
 
 #[non_exhaustive]
 pub(crate) struct Flags6502;
 impl Flags6502 {
-    pub  const C: u8 = (1 << 0);
+    pub const C: u8 = (1 << 0);
     // Carry Bit
-    pub  const Z: u8 = (1 << 1);
+    pub const Z: u8 = (1 << 1);
     // Zero
-    pub  const I: u8 = (1 << 2);
+    pub const I: u8 = (1 << 2);
     // Disable Interrupts
-    pub  const D: u8 = (1 << 3);
+    pub const D: u8 = (1 << 3);
     // Decimal Mode (unused in this implementation)
-    pub  const B: u8 = (1 << 4);
+    pub const B: u8 = (1 << 4);
     // Break
-    pub  const U: u8 = (1 << 5);
+    pub const U: u8 = (1 << 5);
     // Unused
-    pub  const V: u8 = (1 << 6);
+    pub const V: u8 = (1 << 6);
     // Overflow
-    pub  const N: u8 = (1 << 7);
+    pub const N: u8 = (1 << 7);
     // Negative
 }
 // enum Flags6502
@@ -46,9 +45,8 @@ struct Instruction {
     name: String,
     operate: fn(&mut Cpu6502) -> u8,
     addresmode: fn(&mut Cpu6502) -> u8,
-    cyles: u8
+    cyles: u8,
 }
-
 
 pub(crate) struct Cpu6502 {
     // accumulator
@@ -83,15 +81,11 @@ pub(crate) struct Cpu6502 {
     // Counts how many cycles the instruction has remaining
     cycles: u8,
 
-    lookup: [Instruction; 256]
-
-
+    lookup: [Instruction; 256],
 }
 
 impl Cpu6502 {
-
     pub fn new() -> Self {
-
         // let loukup_table: Vec<Instruction> = vec![
         //     Instruction { name: "BRK".to_string(), operate: Cpu6502::brk, addresmode:Cpu6502::imm, cyles:7 }, Instruction { name: "ORA".to_string(), operate: Cpu6502::ora, addresmode:Cpu6502::izx, cyles:6 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:2 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:8 }, Instruction { name: "???".to_string(), operate: Cpu6502::nop, addresmode:Cpu6502::imp, cyles:3 }, Instruction { name: "ORA".to_string(), operate: Cpu6502::ora, addresmode:Cpu6502::zp0, cyles:3 }, Instruction { name: "ASL".to_string(), operate: Cpu6502::asl, addresmode:Cpu6502::zp0, cyles:5 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:5 }, Instruction { name: "PHP".to_string(), operate: Cpu6502::php, addresmode:Cpu6502::imp, cyles:3 }, Instruction { name: "ORA".to_string(), operate: Cpu6502::ora, addresmode:Cpu6502::imm, cyles:2 }, Instruction { name: "ASL".to_string(), operate: Cpu6502::asl, addresmode:Cpu6502::imp, cyles:2 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:2 }, Instruction { name: "???".to_string(), operate: Cpu6502::nop, addresmode:Cpu6502::imp, cyles:4 }, Instruction { name: "ORA".to_string(), operate: Cpu6502::ora, addresmode:Cpu6502::abs, cyles:4 }, Instruction { name: "ASL".to_string(), operate: Cpu6502::asl, addresmode:Cpu6502::abs, cyles:6 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:6 },
         //     Instruction { name: "BPL".to_string(), operate: Cpu6502::bpl, addresmode:Cpu6502::rel, cyles:2 }, Instruction { name: "ORA".to_string(), operate: Cpu6502::ora, addresmode:Cpu6502::izy, cyles:5 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:2 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:8 }, Instruction { name: "???".to_string(), operate: Cpu6502::nop, addresmode:Cpu6502::imp, cyles:4 }, Instruction { name: "ORA".to_string(), operate: Cpu6502::ora, addresmode:Cpu6502::zpx, cyles:4 }, Instruction { name: "ASL".to_string(), operate: Cpu6502::asl, addresmode:Cpu6502::zpx, cyles:6 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:6 }, Instruction { name: "CLC".to_string(), operate: Cpu6502::clc, addresmode:Cpu6502::imp, cyles:2 }, Instruction { name: "ORA".to_string(), operate: Cpu6502::ora, addresmode:Cpu6502::aby, cyles:4 }, Instruction { name: "???".to_string(), operate: Cpu6502::nop, addresmode:Cpu6502::imp, cyles:2 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:7 }, Instruction { name: "???".to_string(), operate: Cpu6502::nop, addresmode:Cpu6502::imp, cyles:4 }, Instruction { name: "ORA".to_string(), operate: Cpu6502::ora, addresmode:Cpu6502::abx, cyles:4 }, Instruction { name: "ASL".to_string(), operate: Cpu6502::asl, addresmode:Cpu6502::abx, cyles:7 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:7 },
@@ -112,22 +106,1542 @@ impl Cpu6502 {
         // ];
 
         let loukup_table: [Instruction; 256] = [
-            Instruction { name: "BRK".to_string(), operate: Cpu6502::brk, addresmode:Cpu6502::imm, cyles:7 }, Instruction { name: "ORA".to_string(), operate: Cpu6502::ora, addresmode:Cpu6502::izx, cyles:6 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:2 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:8 }, Instruction { name: "???".to_string(), operate: Cpu6502::nop, addresmode:Cpu6502::imp, cyles:3 }, Instruction { name: "ORA".to_string(), operate: Cpu6502::ora, addresmode:Cpu6502::zp0, cyles:3 }, Instruction { name: "ASL".to_string(), operate: Cpu6502::asl, addresmode:Cpu6502::zp0, cyles:5 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:5 }, Instruction { name: "PHP".to_string(), operate: Cpu6502::php, addresmode:Cpu6502::imp, cyles:3 }, Instruction { name: "ORA".to_string(), operate: Cpu6502::ora, addresmode:Cpu6502::imm, cyles:2 }, Instruction { name: "ASL".to_string(), operate: Cpu6502::asl, addresmode:Cpu6502::imp, cyles:2 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:2 }, Instruction { name: "???".to_string(), operate: Cpu6502::nop, addresmode:Cpu6502::imp, cyles:4 }, Instruction { name: "ORA".to_string(), operate: Cpu6502::ora, addresmode:Cpu6502::abs, cyles:4 }, Instruction { name: "ASL".to_string(), operate: Cpu6502::asl, addresmode:Cpu6502::abs, cyles:6 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:6 },
-            Instruction { name: "BPL".to_string(), operate: Cpu6502::bpl, addresmode:Cpu6502::rel, cyles:2 }, Instruction { name: "ORA".to_string(), operate: Cpu6502::ora, addresmode:Cpu6502::izy, cyles:5 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:2 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:8 }, Instruction { name: "???".to_string(), operate: Cpu6502::nop, addresmode:Cpu6502::imp, cyles:4 }, Instruction { name: "ORA".to_string(), operate: Cpu6502::ora, addresmode:Cpu6502::zpx, cyles:4 }, Instruction { name: "ASL".to_string(), operate: Cpu6502::asl, addresmode:Cpu6502::zpx, cyles:6 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:6 }, Instruction { name: "CLC".to_string(), operate: Cpu6502::clc, addresmode:Cpu6502::imp, cyles:2 }, Instruction { name: "ORA".to_string(), operate: Cpu6502::ora, addresmode:Cpu6502::aby, cyles:4 }, Instruction { name: "???".to_string(), operate: Cpu6502::nop, addresmode:Cpu6502::imp, cyles:2 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:7 }, Instruction { name: "???".to_string(), operate: Cpu6502::nop, addresmode:Cpu6502::imp, cyles:4 }, Instruction { name: "ORA".to_string(), operate: Cpu6502::ora, addresmode:Cpu6502::abx, cyles:4 }, Instruction { name: "ASL".to_string(), operate: Cpu6502::asl, addresmode:Cpu6502::abx, cyles:7 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:7 },
-            Instruction { name: "JSR".to_string(), operate: Cpu6502::jsr, addresmode:Cpu6502::abs, cyles:6 }, Instruction { name: "AND".to_string(), operate: Cpu6502::and, addresmode:Cpu6502::izx, cyles:6 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:2 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:8 }, Instruction { name: "BIT".to_string(), operate: Cpu6502::bit, addresmode:Cpu6502::zp0, cyles:3 }, Instruction { name: "AND".to_string(), operate: Cpu6502::and, addresmode:Cpu6502::zp0, cyles:3 }, Instruction { name: "ROL".to_string(), operate: Cpu6502::rol, addresmode:Cpu6502::zp0, cyles:5 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:5 }, Instruction { name: "PLP".to_string(), operate: Cpu6502::plp, addresmode:Cpu6502::imp, cyles:4 }, Instruction { name: "AND".to_string(), operate: Cpu6502::and, addresmode:Cpu6502::imm, cyles:2 }, Instruction { name: "ROL".to_string(), operate: Cpu6502::rol, addresmode:Cpu6502::imp, cyles:2 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:2 }, Instruction { name: "BIT".to_string(), operate: Cpu6502::bit, addresmode:Cpu6502::abs, cyles:4 }, Instruction { name: "AND".to_string(), operate: Cpu6502::and, addresmode:Cpu6502::abs, cyles:4 }, Instruction { name: "ROL".to_string(), operate: Cpu6502::rol, addresmode:Cpu6502::abs, cyles:6 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:6 },
-            Instruction { name: "BMI".to_string(), operate: Cpu6502::bmi, addresmode:Cpu6502::rel, cyles:2 }, Instruction { name: "AND".to_string(), operate: Cpu6502::and, addresmode:Cpu6502::izy, cyles:5 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:2 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:8 }, Instruction { name: "???".to_string(), operate: Cpu6502::nop, addresmode:Cpu6502::imp, cyles:4 }, Instruction { name: "AND".to_string(), operate: Cpu6502::and, addresmode:Cpu6502::zpx, cyles:4 }, Instruction { name: "ROL".to_string(), operate: Cpu6502::rol, addresmode:Cpu6502::zpx, cyles:6 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:6 }, Instruction { name: "SEC".to_string(), operate: Cpu6502::sec, addresmode:Cpu6502::imp, cyles:2 }, Instruction { name: "AND".to_string(), operate: Cpu6502::and, addresmode:Cpu6502::aby, cyles:4 }, Instruction { name: "???".to_string(), operate: Cpu6502::nop, addresmode:Cpu6502::imp, cyles:2 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:7 }, Instruction { name: "???".to_string(), operate: Cpu6502::nop, addresmode:Cpu6502::imp, cyles:4 }, Instruction { name: "AND".to_string(), operate: Cpu6502::and, addresmode:Cpu6502::abx, cyles:4 }, Instruction { name: "ROL".to_string(), operate: Cpu6502::rol, addresmode:Cpu6502::abx, cyles:7 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:7 },
-            Instruction { name: "RTI".to_string(), operate: Cpu6502::rti, addresmode:Cpu6502::imp, cyles:6 }, Instruction { name: "EOR".to_string(), operate: Cpu6502::eor, addresmode:Cpu6502::izx, cyles:6 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:2 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:8 }, Instruction { name: "???".to_string(), operate: Cpu6502::nop, addresmode:Cpu6502::imp, cyles:3 }, Instruction { name: "EOR".to_string(), operate: Cpu6502::eor, addresmode:Cpu6502::zp0, cyles:3 }, Instruction { name: "LSR".to_string(), operate: Cpu6502::lsr, addresmode:Cpu6502::zp0, cyles:5 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:5 }, Instruction { name: "PHA".to_string(), operate: Cpu6502::pha, addresmode:Cpu6502::imp, cyles:3 }, Instruction { name: "EOR".to_string(), operate: Cpu6502::eor, addresmode:Cpu6502::imm, cyles:2 }, Instruction { name: "LSR".to_string(), operate: Cpu6502::lsr, addresmode:Cpu6502::imp, cyles:2 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:2 }, Instruction { name: "JMP".to_string(), operate: Cpu6502::jmp, addresmode:Cpu6502::abs, cyles:3 }, Instruction { name: "EOR".to_string(), operate: Cpu6502::eor, addresmode:Cpu6502::abs, cyles:4 }, Instruction { name: "LSR".to_string(), operate: Cpu6502::lsr, addresmode:Cpu6502::abs, cyles:6 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:6 },
-            Instruction { name: "BVC".to_string(), operate: Cpu6502::bvc, addresmode:Cpu6502::rel, cyles:2 }, Instruction { name: "EOR".to_string(), operate: Cpu6502::eor, addresmode:Cpu6502::izy, cyles:5 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:2 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:8 }, Instruction { name: "???".to_string(), operate: Cpu6502::nop, addresmode:Cpu6502::imp, cyles:4 }, Instruction { name: "EOR".to_string(), operate: Cpu6502::eor, addresmode:Cpu6502::zpx, cyles:4 }, Instruction { name: "LSR".to_string(), operate: Cpu6502::lsr, addresmode:Cpu6502::zpx, cyles:6 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:6 }, Instruction { name: "CLI".to_string(), operate: Cpu6502::cli, addresmode:Cpu6502::imp, cyles:2 }, Instruction { name: "EOR".to_string(), operate: Cpu6502::eor, addresmode:Cpu6502::aby, cyles:4 }, Instruction { name: "???".to_string(), operate: Cpu6502::nop, addresmode:Cpu6502::imp, cyles:2 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:7 }, Instruction { name: "???".to_string(), operate: Cpu6502::nop, addresmode:Cpu6502::imp, cyles:4 }, Instruction { name: "EOR".to_string(), operate: Cpu6502::eor, addresmode:Cpu6502::abx, cyles:4 }, Instruction { name: "LSR".to_string(), operate: Cpu6502::lsr, addresmode:Cpu6502::abx, cyles:7 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:7 },
-            Instruction { name: "RTS".to_string(), operate: Cpu6502::rts, addresmode:Cpu6502::imp, cyles:6 }, Instruction { name: "ADC".to_string(), operate: Cpu6502::adc, addresmode:Cpu6502::izx, cyles:6 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:2 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:8 }, Instruction { name: "???".to_string(), operate: Cpu6502::nop, addresmode:Cpu6502::imp, cyles:3 }, Instruction { name: "ADC".to_string(), operate: Cpu6502::adc, addresmode:Cpu6502::zp0, cyles:3 }, Instruction { name: "ROR".to_string(), operate: Cpu6502::ror, addresmode:Cpu6502::zp0, cyles:5 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:5 }, Instruction { name: "PLA".to_string(), operate: Cpu6502::pla, addresmode:Cpu6502::imp, cyles:4 }, Instruction { name: "ADC".to_string(), operate: Cpu6502::adc, addresmode:Cpu6502::imm, cyles:2 }, Instruction { name: "ROR".to_string(), operate: Cpu6502::ror, addresmode:Cpu6502::imp, cyles:2 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:2 }, Instruction { name: "JMP".to_string(), operate: Cpu6502::jmp, addresmode:Cpu6502::ind, cyles:5 }, Instruction { name: "ADC".to_string(), operate: Cpu6502::adc, addresmode:Cpu6502::abs, cyles:4 }, Instruction { name: "ROR".to_string(), operate: Cpu6502::ror, addresmode:Cpu6502::abs, cyles:6 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:6 },
-            Instruction { name: "BVS".to_string(), operate: Cpu6502::bvs, addresmode:Cpu6502::rel, cyles:2 }, Instruction { name: "ADC".to_string(), operate: Cpu6502::adc, addresmode:Cpu6502::izy, cyles:5 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:2 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:8 }, Instruction { name: "???".to_string(), operate: Cpu6502::nop, addresmode:Cpu6502::imp, cyles:4 }, Instruction { name: "ADC".to_string(), operate: Cpu6502::adc, addresmode:Cpu6502::zpx, cyles:4 }, Instruction { name: "ROR".to_string(), operate: Cpu6502::ror, addresmode:Cpu6502::zpx, cyles:6 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:6 }, Instruction { name: "SEI".to_string(), operate: Cpu6502::sei, addresmode:Cpu6502::imp, cyles:2 }, Instruction { name: "ADC".to_string(), operate: Cpu6502::adc, addresmode:Cpu6502::aby, cyles:4 }, Instruction { name: "???".to_string(), operate: Cpu6502::nop, addresmode:Cpu6502::imp, cyles:2 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:7 }, Instruction { name: "???".to_string(), operate: Cpu6502::nop, addresmode:Cpu6502::imp, cyles:4 }, Instruction { name: "ADC".to_string(), operate: Cpu6502::adc, addresmode:Cpu6502::abx, cyles:4 }, Instruction { name: "ROR".to_string(), operate: Cpu6502::ror, addresmode:Cpu6502::abx, cyles:7 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:7 },
-            Instruction { name: "???".to_string(), operate: Cpu6502::nop, addresmode:Cpu6502::imp, cyles:2 }, Instruction { name: "STA".to_string(), operate: Cpu6502::sta, addresmode:Cpu6502::izx, cyles:6 }, Instruction { name: "???".to_string(), operate: Cpu6502::nop, addresmode:Cpu6502::imp, cyles:2 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:6 }, Instruction { name: "STY".to_string(), operate: Cpu6502::sty, addresmode:Cpu6502::zp0, cyles:3 }, Instruction { name: "STA".to_string(), operate: Cpu6502::sta, addresmode:Cpu6502::zp0, cyles:3 }, Instruction { name: "STX".to_string(), operate: Cpu6502::stx, addresmode:Cpu6502::zp0, cyles:3 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:3 }, Instruction { name: "DEY".to_string(), operate: Cpu6502::dey, addresmode:Cpu6502::imp, cyles:2 }, Instruction { name: "???".to_string(), operate: Cpu6502::nop, addresmode:Cpu6502::imp, cyles:2 }, Instruction { name: "TXA".to_string(), operate: Cpu6502::txa, addresmode:Cpu6502::imp, cyles:2 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:2 }, Instruction { name: "STY".to_string(), operate: Cpu6502::sty, addresmode:Cpu6502::abs, cyles:4 }, Instruction { name: "STA".to_string(), operate: Cpu6502::sta, addresmode:Cpu6502::abs, cyles:4 }, Instruction { name: "STX".to_string(), operate: Cpu6502::stx, addresmode:Cpu6502::abs, cyles:4 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:4 },
-            Instruction { name: "BCC".to_string(), operate: Cpu6502::bcc, addresmode:Cpu6502::rel, cyles:2 }, Instruction { name: "STA".to_string(), operate: Cpu6502::sta, addresmode:Cpu6502::izy, cyles:6 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:2 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:6 }, Instruction { name: "STY".to_string(), operate: Cpu6502::sty, addresmode:Cpu6502::zpx, cyles:4 }, Instruction { name: "STA".to_string(), operate: Cpu6502::sta, addresmode:Cpu6502::zpx, cyles:4 }, Instruction { name: "STX".to_string(), operate: Cpu6502::stx, addresmode:Cpu6502::zpy, cyles:4 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:4 }, Instruction { name: "TYA".to_string(), operate: Cpu6502::tya, addresmode:Cpu6502::imp, cyles:2 }, Instruction { name: "STA".to_string(), operate: Cpu6502::sta, addresmode:Cpu6502::aby, cyles:5 }, Instruction { name: "TXS".to_string(), operate: Cpu6502::txs, addresmode:Cpu6502::imp, cyles:2 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:5 }, Instruction { name: "???".to_string(), operate: Cpu6502::nop, addresmode:Cpu6502::imp, cyles:5 }, Instruction { name: "STA".to_string(), operate: Cpu6502::sta, addresmode:Cpu6502::abx, cyles:5 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:5 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:5 },
-            Instruction { name: "LDY".to_string(), operate: Cpu6502::ldy, addresmode:Cpu6502::imm, cyles:2 }, Instruction { name: "LDA".to_string(), operate: Cpu6502::lda, addresmode:Cpu6502::izx, cyles:6 }, Instruction { name: "LDX".to_string(), operate: Cpu6502::ldx, addresmode:Cpu6502::imm, cyles:2 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:6 }, Instruction { name: "LDY".to_string(), operate: Cpu6502::ldy, addresmode:Cpu6502::zp0, cyles:3 }, Instruction { name: "LDA".to_string(), operate: Cpu6502::lda, addresmode:Cpu6502::zp0, cyles:3 }, Instruction { name: "LDX".to_string(), operate: Cpu6502::ldx, addresmode:Cpu6502::zp0, cyles:3 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:3 }, Instruction { name: "TAY".to_string(), operate: Cpu6502::tay, addresmode:Cpu6502::imp, cyles:2 }, Instruction { name: "LDA".to_string(), operate: Cpu6502::lda, addresmode:Cpu6502::imm, cyles:2 }, Instruction { name: "TAX".to_string(), operate: Cpu6502::tax, addresmode:Cpu6502::imp, cyles:2 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:2 }, Instruction { name: "LDY".to_string(), operate: Cpu6502::ldy, addresmode:Cpu6502::abs, cyles:4 }, Instruction { name: "LDA".to_string(), operate: Cpu6502::lda, addresmode:Cpu6502::abs, cyles:4 }, Instruction { name: "LDX".to_string(), operate: Cpu6502::ldx, addresmode:Cpu6502::abs, cyles:4 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:4 },
-            Instruction { name: "BCS".to_string(), operate: Cpu6502::bcs, addresmode:Cpu6502::rel, cyles:2 }, Instruction { name: "LDA".to_string(), operate: Cpu6502::lda, addresmode:Cpu6502::izy, cyles:5 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:2 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:5 }, Instruction { name: "LDY".to_string(), operate: Cpu6502::ldy, addresmode:Cpu6502::zpx, cyles:4 }, Instruction { name: "LDA".to_string(), operate: Cpu6502::lda, addresmode:Cpu6502::zpx, cyles:4 }, Instruction { name: "LDX".to_string(), operate: Cpu6502::ldx, addresmode:Cpu6502::zpy, cyles:4 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:4 }, Instruction { name: "CLV".to_string(), operate: Cpu6502::clv, addresmode:Cpu6502::imp, cyles:2 }, Instruction { name: "LDA".to_string(), operate: Cpu6502::lda, addresmode:Cpu6502::aby, cyles:4 }, Instruction { name: "TSX".to_string(), operate: Cpu6502::tsx, addresmode:Cpu6502::imp, cyles:2 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:4 }, Instruction { name: "LDY".to_string(), operate: Cpu6502::ldy, addresmode:Cpu6502::abx, cyles:4 }, Instruction { name: "LDA".to_string(), operate: Cpu6502::lda, addresmode:Cpu6502::abx, cyles:4 }, Instruction { name: "LDX".to_string(), operate: Cpu6502::ldx, addresmode:Cpu6502::aby, cyles:4 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:4 },
-            Instruction { name: "CPY".to_string(), operate: Cpu6502::cpy, addresmode:Cpu6502::imm, cyles:2 }, Instruction { name: "CMP".to_string(), operate: Cpu6502::cmp, addresmode:Cpu6502::izx, cyles:6 }, Instruction { name: "???".to_string(), operate: Cpu6502::nop, addresmode:Cpu6502::imp, cyles:2 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:8 }, Instruction { name: "CPY".to_string(), operate: Cpu6502::cpy, addresmode:Cpu6502::zp0, cyles:3 }, Instruction { name: "CMP".to_string(), operate: Cpu6502::cmp, addresmode:Cpu6502::zp0, cyles:3 }, Instruction { name: "DEC".to_string(), operate: Cpu6502::dec, addresmode:Cpu6502::zp0, cyles:5 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:5 }, Instruction { name: "INY".to_string(), operate: Cpu6502::iny, addresmode:Cpu6502::imp, cyles:2 }, Instruction { name: "CMP".to_string(), operate: Cpu6502::cmp, addresmode:Cpu6502::imm, cyles:2 }, Instruction { name: "DEX".to_string(), operate: Cpu6502::dex, addresmode:Cpu6502::imp, cyles:2 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:2 }, Instruction { name: "CPY".to_string(), operate: Cpu6502::cpy, addresmode:Cpu6502::abs, cyles:4 }, Instruction { name: "CMP".to_string(), operate: Cpu6502::cmp, addresmode:Cpu6502::abs, cyles:4 }, Instruction { name: "DEC".to_string(), operate: Cpu6502::dec, addresmode:Cpu6502::abs, cyles:6 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:6 },
-            Instruction { name: "BNE".to_string(), operate: Cpu6502::bne, addresmode:Cpu6502::rel, cyles:2 }, Instruction { name: "CMP".to_string(), operate: Cpu6502::cmp, addresmode:Cpu6502::izy, cyles:5 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:2 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:8 }, Instruction { name: "???".to_string(), operate: Cpu6502::nop, addresmode:Cpu6502::imp, cyles:4 }, Instruction { name: "CMP".to_string(), operate: Cpu6502::cmp, addresmode:Cpu6502::zpx, cyles:4 }, Instruction { name: "DEC".to_string(), operate: Cpu6502::dec, addresmode:Cpu6502::zpx, cyles:6 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:6 }, Instruction { name: "CLD".to_string(), operate: Cpu6502::cld, addresmode:Cpu6502::imp, cyles:2 }, Instruction { name: "CMP".to_string(), operate: Cpu6502::cmp, addresmode:Cpu6502::aby, cyles:4 }, Instruction { name: "NOP".to_string(), operate: Cpu6502::nop, addresmode:Cpu6502::imp, cyles:2 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:7 }, Instruction { name: "???".to_string(), operate: Cpu6502::nop, addresmode:Cpu6502::imp, cyles:4 }, Instruction { name: "CMP".to_string(), operate: Cpu6502::cmp, addresmode:Cpu6502::abx, cyles:4 }, Instruction { name: "DEC".to_string(), operate: Cpu6502::dec, addresmode:Cpu6502::abx, cyles:7 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:7 },
-            Instruction { name: "CPX".to_string(), operate: Cpu6502::cpx, addresmode:Cpu6502::imm, cyles:2 }, Instruction { name: "SBC".to_string(), operate: Cpu6502::sbc, addresmode:Cpu6502::izx, cyles:6 }, Instruction { name: "???".to_string(), operate: Cpu6502::nop, addresmode:Cpu6502::imp, cyles:2 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:8 }, Instruction { name: "CPX".to_string(), operate: Cpu6502::cpx, addresmode:Cpu6502::zp0, cyles:3 }, Instruction { name: "SBC".to_string(), operate: Cpu6502::sbc, addresmode:Cpu6502::zp0, cyles:3 }, Instruction { name: "INC".to_string(), operate: Cpu6502::inc, addresmode:Cpu6502::zp0, cyles:5 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:5 }, Instruction { name: "INX".to_string(), operate: Cpu6502::inx, addresmode:Cpu6502::imp, cyles:2 }, Instruction { name: "SBC".to_string(), operate: Cpu6502::sbc, addresmode:Cpu6502::imm, cyles:2 }, Instruction { name: "NOP".to_string(), operate: Cpu6502::nop, addresmode:Cpu6502::imp, cyles:2 }, Instruction { name: "???".to_string(), operate: Cpu6502::sbc, addresmode:Cpu6502::imp, cyles:2 }, Instruction { name: "CPX".to_string(), operate: Cpu6502::cpx, addresmode:Cpu6502::abs, cyles:4 }, Instruction { name: "SBC".to_string(), operate: Cpu6502::sbc, addresmode:Cpu6502::abs, cyles:4 }, Instruction { name: "INC".to_string(), operate: Cpu6502::inc, addresmode:Cpu6502::abs, cyles:6 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:6 },
-            Instruction { name: "BEQ".to_string(), operate: Cpu6502::beq, addresmode:Cpu6502::rel, cyles:2 }, Instruction { name: "SBC".to_string(), operate: Cpu6502::sbc, addresmode:Cpu6502::izy, cyles:5 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:2 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:8 }, Instruction { name: "???".to_string(), operate: Cpu6502::nop, addresmode:Cpu6502::imp, cyles:4 }, Instruction { name: "SBC".to_string(), operate: Cpu6502::sbc, addresmode:Cpu6502::zpx, cyles:4 }, Instruction { name: "INC".to_string(), operate: Cpu6502::inc, addresmode:Cpu6502::zpx, cyles:6 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:6 }, Instruction { name: "SED".to_string(), operate: Cpu6502::sed, addresmode:Cpu6502::imp, cyles:2 }, Instruction { name: "SBC".to_string(), operate: Cpu6502::sbc, addresmode:Cpu6502::aby, cyles:4 }, Instruction { name: "NOP".to_string(), operate: Cpu6502::nop, addresmode:Cpu6502::imp, cyles:2 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:7 }, Instruction { name: "???".to_string(), operate: Cpu6502::nop, addresmode:Cpu6502::imp, cyles:4 }, Instruction { name: "SBC".to_string(), operate: Cpu6502::sbc, addresmode:Cpu6502::abx, cyles:4 }, Instruction { name: "INC".to_string(), operate: Cpu6502::inc, addresmode:Cpu6502::abx, cyles:7 }, Instruction { name: "???".to_string(), operate: Cpu6502::xxx, addresmode:Cpu6502::imp, cyles:7 },
+            Instruction {
+                name: "BRK".to_string(),
+                operate: Cpu6502::brk,
+                addresmode: Cpu6502::imm,
+                cyles: 7,
+            },
+            Instruction {
+                name: "ORA".to_string(),
+                operate: Cpu6502::ora,
+                addresmode: Cpu6502::izx,
+                cyles: 6,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 2,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 8,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::nop,
+                addresmode: Cpu6502::imp,
+                cyles: 3,
+            },
+            Instruction {
+                name: "ORA".to_string(),
+                operate: Cpu6502::ora,
+                addresmode: Cpu6502::zp0,
+                cyles: 3,
+            },
+            Instruction {
+                name: "ASL".to_string(),
+                operate: Cpu6502::asl,
+                addresmode: Cpu6502::zp0,
+                cyles: 5,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 5,
+            },
+            Instruction {
+                name: "PHP".to_string(),
+                operate: Cpu6502::php,
+                addresmode: Cpu6502::imp,
+                cyles: 3,
+            },
+            Instruction {
+                name: "ORA".to_string(),
+                operate: Cpu6502::ora,
+                addresmode: Cpu6502::imm,
+                cyles: 2,
+            },
+            Instruction {
+                name: "ASL".to_string(),
+                operate: Cpu6502::asl,
+                addresmode: Cpu6502::imp,
+                cyles: 2,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 2,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::nop,
+                addresmode: Cpu6502::imp,
+                cyles: 4,
+            },
+            Instruction {
+                name: "ORA".to_string(),
+                operate: Cpu6502::ora,
+                addresmode: Cpu6502::abs,
+                cyles: 4,
+            },
+            Instruction {
+                name: "ASL".to_string(),
+                operate: Cpu6502::asl,
+                addresmode: Cpu6502::abs,
+                cyles: 6,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 6,
+            },
+            Instruction {
+                name: "BPL".to_string(),
+                operate: Cpu6502::bpl,
+                addresmode: Cpu6502::rel,
+                cyles: 2,
+            },
+            Instruction {
+                name: "ORA".to_string(),
+                operate: Cpu6502::ora,
+                addresmode: Cpu6502::izy,
+                cyles: 5,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 2,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 8,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::nop,
+                addresmode: Cpu6502::imp,
+                cyles: 4,
+            },
+            Instruction {
+                name: "ORA".to_string(),
+                operate: Cpu6502::ora,
+                addresmode: Cpu6502::zpx,
+                cyles: 4,
+            },
+            Instruction {
+                name: "ASL".to_string(),
+                operate: Cpu6502::asl,
+                addresmode: Cpu6502::zpx,
+                cyles: 6,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 6,
+            },
+            Instruction {
+                name: "CLC".to_string(),
+                operate: Cpu6502::clc,
+                addresmode: Cpu6502::imp,
+                cyles: 2,
+            },
+            Instruction {
+                name: "ORA".to_string(),
+                operate: Cpu6502::ora,
+                addresmode: Cpu6502::aby,
+                cyles: 4,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::nop,
+                addresmode: Cpu6502::imp,
+                cyles: 2,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 7,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::nop,
+                addresmode: Cpu6502::imp,
+                cyles: 4,
+            },
+            Instruction {
+                name: "ORA".to_string(),
+                operate: Cpu6502::ora,
+                addresmode: Cpu6502::abx,
+                cyles: 4,
+            },
+            Instruction {
+                name: "ASL".to_string(),
+                operate: Cpu6502::asl,
+                addresmode: Cpu6502::abx,
+                cyles: 7,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 7,
+            },
+            Instruction {
+                name: "JSR".to_string(),
+                operate: Cpu6502::jsr,
+                addresmode: Cpu6502::abs,
+                cyles: 6,
+            },
+            Instruction {
+                name: "AND".to_string(),
+                operate: Cpu6502::and,
+                addresmode: Cpu6502::izx,
+                cyles: 6,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 2,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 8,
+            },
+            Instruction {
+                name: "BIT".to_string(),
+                operate: Cpu6502::bit,
+                addresmode: Cpu6502::zp0,
+                cyles: 3,
+            },
+            Instruction {
+                name: "AND".to_string(),
+                operate: Cpu6502::and,
+                addresmode: Cpu6502::zp0,
+                cyles: 3,
+            },
+            Instruction {
+                name: "ROL".to_string(),
+                operate: Cpu6502::rol,
+                addresmode: Cpu6502::zp0,
+                cyles: 5,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 5,
+            },
+            Instruction {
+                name: "PLP".to_string(),
+                operate: Cpu6502::plp,
+                addresmode: Cpu6502::imp,
+                cyles: 4,
+            },
+            Instruction {
+                name: "AND".to_string(),
+                operate: Cpu6502::and,
+                addresmode: Cpu6502::imm,
+                cyles: 2,
+            },
+            Instruction {
+                name: "ROL".to_string(),
+                operate: Cpu6502::rol,
+                addresmode: Cpu6502::imp,
+                cyles: 2,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 2,
+            },
+            Instruction {
+                name: "BIT".to_string(),
+                operate: Cpu6502::bit,
+                addresmode: Cpu6502::abs,
+                cyles: 4,
+            },
+            Instruction {
+                name: "AND".to_string(),
+                operate: Cpu6502::and,
+                addresmode: Cpu6502::abs,
+                cyles: 4,
+            },
+            Instruction {
+                name: "ROL".to_string(),
+                operate: Cpu6502::rol,
+                addresmode: Cpu6502::abs,
+                cyles: 6,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 6,
+            },
+            Instruction {
+                name: "BMI".to_string(),
+                operate: Cpu6502::bmi,
+                addresmode: Cpu6502::rel,
+                cyles: 2,
+            },
+            Instruction {
+                name: "AND".to_string(),
+                operate: Cpu6502::and,
+                addresmode: Cpu6502::izy,
+                cyles: 5,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 2,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 8,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::nop,
+                addresmode: Cpu6502::imp,
+                cyles: 4,
+            },
+            Instruction {
+                name: "AND".to_string(),
+                operate: Cpu6502::and,
+                addresmode: Cpu6502::zpx,
+                cyles: 4,
+            },
+            Instruction {
+                name: "ROL".to_string(),
+                operate: Cpu6502::rol,
+                addresmode: Cpu6502::zpx,
+                cyles: 6,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 6,
+            },
+            Instruction {
+                name: "SEC".to_string(),
+                operate: Cpu6502::sec,
+                addresmode: Cpu6502::imp,
+                cyles: 2,
+            },
+            Instruction {
+                name: "AND".to_string(),
+                operate: Cpu6502::and,
+                addresmode: Cpu6502::aby,
+                cyles: 4,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::nop,
+                addresmode: Cpu6502::imp,
+                cyles: 2,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 7,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::nop,
+                addresmode: Cpu6502::imp,
+                cyles: 4,
+            },
+            Instruction {
+                name: "AND".to_string(),
+                operate: Cpu6502::and,
+                addresmode: Cpu6502::abx,
+                cyles: 4,
+            },
+            Instruction {
+                name: "ROL".to_string(),
+                operate: Cpu6502::rol,
+                addresmode: Cpu6502::abx,
+                cyles: 7,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 7,
+            },
+            Instruction {
+                name: "RTI".to_string(),
+                operate: Cpu6502::rti,
+                addresmode: Cpu6502::imp,
+                cyles: 6,
+            },
+            Instruction {
+                name: "EOR".to_string(),
+                operate: Cpu6502::eor,
+                addresmode: Cpu6502::izx,
+                cyles: 6,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 2,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 8,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::nop,
+                addresmode: Cpu6502::imp,
+                cyles: 3,
+            },
+            Instruction {
+                name: "EOR".to_string(),
+                operate: Cpu6502::eor,
+                addresmode: Cpu6502::zp0,
+                cyles: 3,
+            },
+            Instruction {
+                name: "LSR".to_string(),
+                operate: Cpu6502::lsr,
+                addresmode: Cpu6502::zp0,
+                cyles: 5,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 5,
+            },
+            Instruction {
+                name: "PHA".to_string(),
+                operate: Cpu6502::pha,
+                addresmode: Cpu6502::imp,
+                cyles: 3,
+            },
+            Instruction {
+                name: "EOR".to_string(),
+                operate: Cpu6502::eor,
+                addresmode: Cpu6502::imm,
+                cyles: 2,
+            },
+            Instruction {
+                name: "LSR".to_string(),
+                operate: Cpu6502::lsr,
+                addresmode: Cpu6502::imp,
+                cyles: 2,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 2,
+            },
+            Instruction {
+                name: "JMP".to_string(),
+                operate: Cpu6502::jmp,
+                addresmode: Cpu6502::abs,
+                cyles: 3,
+            },
+            Instruction {
+                name: "EOR".to_string(),
+                operate: Cpu6502::eor,
+                addresmode: Cpu6502::abs,
+                cyles: 4,
+            },
+            Instruction {
+                name: "LSR".to_string(),
+                operate: Cpu6502::lsr,
+                addresmode: Cpu6502::abs,
+                cyles: 6,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 6,
+            },
+            Instruction {
+                name: "BVC".to_string(),
+                operate: Cpu6502::bvc,
+                addresmode: Cpu6502::rel,
+                cyles: 2,
+            },
+            Instruction {
+                name: "EOR".to_string(),
+                operate: Cpu6502::eor,
+                addresmode: Cpu6502::izy,
+                cyles: 5,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 2,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 8,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::nop,
+                addresmode: Cpu6502::imp,
+                cyles: 4,
+            },
+            Instruction {
+                name: "EOR".to_string(),
+                operate: Cpu6502::eor,
+                addresmode: Cpu6502::zpx,
+                cyles: 4,
+            },
+            Instruction {
+                name: "LSR".to_string(),
+                operate: Cpu6502::lsr,
+                addresmode: Cpu6502::zpx,
+                cyles: 6,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 6,
+            },
+            Instruction {
+                name: "CLI".to_string(),
+                operate: Cpu6502::cli,
+                addresmode: Cpu6502::imp,
+                cyles: 2,
+            },
+            Instruction {
+                name: "EOR".to_string(),
+                operate: Cpu6502::eor,
+                addresmode: Cpu6502::aby,
+                cyles: 4,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::nop,
+                addresmode: Cpu6502::imp,
+                cyles: 2,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 7,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::nop,
+                addresmode: Cpu6502::imp,
+                cyles: 4,
+            },
+            Instruction {
+                name: "EOR".to_string(),
+                operate: Cpu6502::eor,
+                addresmode: Cpu6502::abx,
+                cyles: 4,
+            },
+            Instruction {
+                name: "LSR".to_string(),
+                operate: Cpu6502::lsr,
+                addresmode: Cpu6502::abx,
+                cyles: 7,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 7,
+            },
+            Instruction {
+                name: "RTS".to_string(),
+                operate: Cpu6502::rts,
+                addresmode: Cpu6502::imp,
+                cyles: 6,
+            },
+            Instruction {
+                name: "ADC".to_string(),
+                operate: Cpu6502::adc,
+                addresmode: Cpu6502::izx,
+                cyles: 6,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 2,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 8,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::nop,
+                addresmode: Cpu6502::imp,
+                cyles: 3,
+            },
+            Instruction {
+                name: "ADC".to_string(),
+                operate: Cpu6502::adc,
+                addresmode: Cpu6502::zp0,
+                cyles: 3,
+            },
+            Instruction {
+                name: "ROR".to_string(),
+                operate: Cpu6502::ror,
+                addresmode: Cpu6502::zp0,
+                cyles: 5,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 5,
+            },
+            Instruction {
+                name: "PLA".to_string(),
+                operate: Cpu6502::pla,
+                addresmode: Cpu6502::imp,
+                cyles: 4,
+            },
+            Instruction {
+                name: "ADC".to_string(),
+                operate: Cpu6502::adc,
+                addresmode: Cpu6502::imm,
+                cyles: 2,
+            },
+            Instruction {
+                name: "ROR".to_string(),
+                operate: Cpu6502::ror,
+                addresmode: Cpu6502::imp,
+                cyles: 2,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 2,
+            },
+            Instruction {
+                name: "JMP".to_string(),
+                operate: Cpu6502::jmp,
+                addresmode: Cpu6502::ind,
+                cyles: 5,
+            },
+            Instruction {
+                name: "ADC".to_string(),
+                operate: Cpu6502::adc,
+                addresmode: Cpu6502::abs,
+                cyles: 4,
+            },
+            Instruction {
+                name: "ROR".to_string(),
+                operate: Cpu6502::ror,
+                addresmode: Cpu6502::abs,
+                cyles: 6,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 6,
+            },
+            Instruction {
+                name: "BVS".to_string(),
+                operate: Cpu6502::bvs,
+                addresmode: Cpu6502::rel,
+                cyles: 2,
+            },
+            Instruction {
+                name: "ADC".to_string(),
+                operate: Cpu6502::adc,
+                addresmode: Cpu6502::izy,
+                cyles: 5,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 2,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 8,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::nop,
+                addresmode: Cpu6502::imp,
+                cyles: 4,
+            },
+            Instruction {
+                name: "ADC".to_string(),
+                operate: Cpu6502::adc,
+                addresmode: Cpu6502::zpx,
+                cyles: 4,
+            },
+            Instruction {
+                name: "ROR".to_string(),
+                operate: Cpu6502::ror,
+                addresmode: Cpu6502::zpx,
+                cyles: 6,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 6,
+            },
+            Instruction {
+                name: "SEI".to_string(),
+                operate: Cpu6502::sei,
+                addresmode: Cpu6502::imp,
+                cyles: 2,
+            },
+            Instruction {
+                name: "ADC".to_string(),
+                operate: Cpu6502::adc,
+                addresmode: Cpu6502::aby,
+                cyles: 4,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::nop,
+                addresmode: Cpu6502::imp,
+                cyles: 2,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 7,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::nop,
+                addresmode: Cpu6502::imp,
+                cyles: 4,
+            },
+            Instruction {
+                name: "ADC".to_string(),
+                operate: Cpu6502::adc,
+                addresmode: Cpu6502::abx,
+                cyles: 4,
+            },
+            Instruction {
+                name: "ROR".to_string(),
+                operate: Cpu6502::ror,
+                addresmode: Cpu6502::abx,
+                cyles: 7,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 7,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::nop,
+                addresmode: Cpu6502::imp,
+                cyles: 2,
+            },
+            Instruction {
+                name: "STA".to_string(),
+                operate: Cpu6502::sta,
+                addresmode: Cpu6502::izx,
+                cyles: 6,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::nop,
+                addresmode: Cpu6502::imp,
+                cyles: 2,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 6,
+            },
+            Instruction {
+                name: "STY".to_string(),
+                operate: Cpu6502::sty,
+                addresmode: Cpu6502::zp0,
+                cyles: 3,
+            },
+            Instruction {
+                name: "STA".to_string(),
+                operate: Cpu6502::sta,
+                addresmode: Cpu6502::zp0,
+                cyles: 3,
+            },
+            Instruction {
+                name: "STX".to_string(),
+                operate: Cpu6502::stx,
+                addresmode: Cpu6502::zp0,
+                cyles: 3,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 3,
+            },
+            Instruction {
+                name: "DEY".to_string(),
+                operate: Cpu6502::dey,
+                addresmode: Cpu6502::imp,
+                cyles: 2,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::nop,
+                addresmode: Cpu6502::imp,
+                cyles: 2,
+            },
+            Instruction {
+                name: "TXA".to_string(),
+                operate: Cpu6502::txa,
+                addresmode: Cpu6502::imp,
+                cyles: 2,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 2,
+            },
+            Instruction {
+                name: "STY".to_string(),
+                operate: Cpu6502::sty,
+                addresmode: Cpu6502::abs,
+                cyles: 4,
+            },
+            Instruction {
+                name: "STA".to_string(),
+                operate: Cpu6502::sta,
+                addresmode: Cpu6502::abs,
+                cyles: 4,
+            },
+            Instruction {
+                name: "STX".to_string(),
+                operate: Cpu6502::stx,
+                addresmode: Cpu6502::abs,
+                cyles: 4,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 4,
+            },
+            Instruction {
+                name: "BCC".to_string(),
+                operate: Cpu6502::bcc,
+                addresmode: Cpu6502::rel,
+                cyles: 2,
+            },
+            Instruction {
+                name: "STA".to_string(),
+                operate: Cpu6502::sta,
+                addresmode: Cpu6502::izy,
+                cyles: 6,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 2,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 6,
+            },
+            Instruction {
+                name: "STY".to_string(),
+                operate: Cpu6502::sty,
+                addresmode: Cpu6502::zpx,
+                cyles: 4,
+            },
+            Instruction {
+                name: "STA".to_string(),
+                operate: Cpu6502::sta,
+                addresmode: Cpu6502::zpx,
+                cyles: 4,
+            },
+            Instruction {
+                name: "STX".to_string(),
+                operate: Cpu6502::stx,
+                addresmode: Cpu6502::zpy,
+                cyles: 4,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 4,
+            },
+            Instruction {
+                name: "TYA".to_string(),
+                operate: Cpu6502::tya,
+                addresmode: Cpu6502::imp,
+                cyles: 2,
+            },
+            Instruction {
+                name: "STA".to_string(),
+                operate: Cpu6502::sta,
+                addresmode: Cpu6502::aby,
+                cyles: 5,
+            },
+            Instruction {
+                name: "TXS".to_string(),
+                operate: Cpu6502::txs,
+                addresmode: Cpu6502::imp,
+                cyles: 2,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 5,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::nop,
+                addresmode: Cpu6502::imp,
+                cyles: 5,
+            },
+            Instruction {
+                name: "STA".to_string(),
+                operate: Cpu6502::sta,
+                addresmode: Cpu6502::abx,
+                cyles: 5,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 5,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 5,
+            },
+            Instruction {
+                name: "LDY".to_string(),
+                operate: Cpu6502::ldy,
+                addresmode: Cpu6502::imm,
+                cyles: 2,
+            },
+            Instruction {
+                name: "LDA".to_string(),
+                operate: Cpu6502::lda,
+                addresmode: Cpu6502::izx,
+                cyles: 6,
+            },
+            Instruction {
+                name: "LDX".to_string(),
+                operate: Cpu6502::ldx,
+                addresmode: Cpu6502::imm,
+                cyles: 2,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 6,
+            },
+            Instruction {
+                name: "LDY".to_string(),
+                operate: Cpu6502::ldy,
+                addresmode: Cpu6502::zp0,
+                cyles: 3,
+            },
+            Instruction {
+                name: "LDA".to_string(),
+                operate: Cpu6502::lda,
+                addresmode: Cpu6502::zp0,
+                cyles: 3,
+            },
+            Instruction {
+                name: "LDX".to_string(),
+                operate: Cpu6502::ldx,
+                addresmode: Cpu6502::zp0,
+                cyles: 3,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 3,
+            },
+            Instruction {
+                name: "TAY".to_string(),
+                operate: Cpu6502::tay,
+                addresmode: Cpu6502::imp,
+                cyles: 2,
+            },
+            Instruction {
+                name: "LDA".to_string(),
+                operate: Cpu6502::lda,
+                addresmode: Cpu6502::imm,
+                cyles: 2,
+            },
+            Instruction {
+                name: "TAX".to_string(),
+                operate: Cpu6502::tax,
+                addresmode: Cpu6502::imp,
+                cyles: 2,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 2,
+            },
+            Instruction {
+                name: "LDY".to_string(),
+                operate: Cpu6502::ldy,
+                addresmode: Cpu6502::abs,
+                cyles: 4,
+            },
+            Instruction {
+                name: "LDA".to_string(),
+                operate: Cpu6502::lda,
+                addresmode: Cpu6502::abs,
+                cyles: 4,
+            },
+            Instruction {
+                name: "LDX".to_string(),
+                operate: Cpu6502::ldx,
+                addresmode: Cpu6502::abs,
+                cyles: 4,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 4,
+            },
+            Instruction {
+                name: "BCS".to_string(),
+                operate: Cpu6502::bcs,
+                addresmode: Cpu6502::rel,
+                cyles: 2,
+            },
+            Instruction {
+                name: "LDA".to_string(),
+                operate: Cpu6502::lda,
+                addresmode: Cpu6502::izy,
+                cyles: 5,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 2,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 5,
+            },
+            Instruction {
+                name: "LDY".to_string(),
+                operate: Cpu6502::ldy,
+                addresmode: Cpu6502::zpx,
+                cyles: 4,
+            },
+            Instruction {
+                name: "LDA".to_string(),
+                operate: Cpu6502::lda,
+                addresmode: Cpu6502::zpx,
+                cyles: 4,
+            },
+            Instruction {
+                name: "LDX".to_string(),
+                operate: Cpu6502::ldx,
+                addresmode: Cpu6502::zpy,
+                cyles: 4,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 4,
+            },
+            Instruction {
+                name: "CLV".to_string(),
+                operate: Cpu6502::clv,
+                addresmode: Cpu6502::imp,
+                cyles: 2,
+            },
+            Instruction {
+                name: "LDA".to_string(),
+                operate: Cpu6502::lda,
+                addresmode: Cpu6502::aby,
+                cyles: 4,
+            },
+            Instruction {
+                name: "TSX".to_string(),
+                operate: Cpu6502::tsx,
+                addresmode: Cpu6502::imp,
+                cyles: 2,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 4,
+            },
+            Instruction {
+                name: "LDY".to_string(),
+                operate: Cpu6502::ldy,
+                addresmode: Cpu6502::abx,
+                cyles: 4,
+            },
+            Instruction {
+                name: "LDA".to_string(),
+                operate: Cpu6502::lda,
+                addresmode: Cpu6502::abx,
+                cyles: 4,
+            },
+            Instruction {
+                name: "LDX".to_string(),
+                operate: Cpu6502::ldx,
+                addresmode: Cpu6502::aby,
+                cyles: 4,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 4,
+            },
+            Instruction {
+                name: "CPY".to_string(),
+                operate: Cpu6502::cpy,
+                addresmode: Cpu6502::imm,
+                cyles: 2,
+            },
+            Instruction {
+                name: "CMP".to_string(),
+                operate: Cpu6502::cmp,
+                addresmode: Cpu6502::izx,
+                cyles: 6,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::nop,
+                addresmode: Cpu6502::imp,
+                cyles: 2,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 8,
+            },
+            Instruction {
+                name: "CPY".to_string(),
+                operate: Cpu6502::cpy,
+                addresmode: Cpu6502::zp0,
+                cyles: 3,
+            },
+            Instruction {
+                name: "CMP".to_string(),
+                operate: Cpu6502::cmp,
+                addresmode: Cpu6502::zp0,
+                cyles: 3,
+            },
+            Instruction {
+                name: "DEC".to_string(),
+                operate: Cpu6502::dec,
+                addresmode: Cpu6502::zp0,
+                cyles: 5,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 5,
+            },
+            Instruction {
+                name: "INY".to_string(),
+                operate: Cpu6502::iny,
+                addresmode: Cpu6502::imp,
+                cyles: 2,
+            },
+            Instruction {
+                name: "CMP".to_string(),
+                operate: Cpu6502::cmp,
+                addresmode: Cpu6502::imm,
+                cyles: 2,
+            },
+            Instruction {
+                name: "DEX".to_string(),
+                operate: Cpu6502::dex,
+                addresmode: Cpu6502::imp,
+                cyles: 2,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 2,
+            },
+            Instruction {
+                name: "CPY".to_string(),
+                operate: Cpu6502::cpy,
+                addresmode: Cpu6502::abs,
+                cyles: 4,
+            },
+            Instruction {
+                name: "CMP".to_string(),
+                operate: Cpu6502::cmp,
+                addresmode: Cpu6502::abs,
+                cyles: 4,
+            },
+            Instruction {
+                name: "DEC".to_string(),
+                operate: Cpu6502::dec,
+                addresmode: Cpu6502::abs,
+                cyles: 6,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 6,
+            },
+            Instruction {
+                name: "BNE".to_string(),
+                operate: Cpu6502::bne,
+                addresmode: Cpu6502::rel,
+                cyles: 2,
+            },
+            Instruction {
+                name: "CMP".to_string(),
+                operate: Cpu6502::cmp,
+                addresmode: Cpu6502::izy,
+                cyles: 5,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 2,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 8,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::nop,
+                addresmode: Cpu6502::imp,
+                cyles: 4,
+            },
+            Instruction {
+                name: "CMP".to_string(),
+                operate: Cpu6502::cmp,
+                addresmode: Cpu6502::zpx,
+                cyles: 4,
+            },
+            Instruction {
+                name: "DEC".to_string(),
+                operate: Cpu6502::dec,
+                addresmode: Cpu6502::zpx,
+                cyles: 6,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 6,
+            },
+            Instruction {
+                name: "CLD".to_string(),
+                operate: Cpu6502::cld,
+                addresmode: Cpu6502::imp,
+                cyles: 2,
+            },
+            Instruction {
+                name: "CMP".to_string(),
+                operate: Cpu6502::cmp,
+                addresmode: Cpu6502::aby,
+                cyles: 4,
+            },
+            Instruction {
+                name: "NOP".to_string(),
+                operate: Cpu6502::nop,
+                addresmode: Cpu6502::imp,
+                cyles: 2,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 7,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::nop,
+                addresmode: Cpu6502::imp,
+                cyles: 4,
+            },
+            Instruction {
+                name: "CMP".to_string(),
+                operate: Cpu6502::cmp,
+                addresmode: Cpu6502::abx,
+                cyles: 4,
+            },
+            Instruction {
+                name: "DEC".to_string(),
+                operate: Cpu6502::dec,
+                addresmode: Cpu6502::abx,
+                cyles: 7,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 7,
+            },
+            Instruction {
+                name: "CPX".to_string(),
+                operate: Cpu6502::cpx,
+                addresmode: Cpu6502::imm,
+                cyles: 2,
+            },
+            Instruction {
+                name: "SBC".to_string(),
+                operate: Cpu6502::sbc,
+                addresmode: Cpu6502::izx,
+                cyles: 6,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::nop,
+                addresmode: Cpu6502::imp,
+                cyles: 2,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 8,
+            },
+            Instruction {
+                name: "CPX".to_string(),
+                operate: Cpu6502::cpx,
+                addresmode: Cpu6502::zp0,
+                cyles: 3,
+            },
+            Instruction {
+                name: "SBC".to_string(),
+                operate: Cpu6502::sbc,
+                addresmode: Cpu6502::zp0,
+                cyles: 3,
+            },
+            Instruction {
+                name: "INC".to_string(),
+                operate: Cpu6502::inc,
+                addresmode: Cpu6502::zp0,
+                cyles: 5,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 5,
+            },
+            Instruction {
+                name: "INX".to_string(),
+                operate: Cpu6502::inx,
+                addresmode: Cpu6502::imp,
+                cyles: 2,
+            },
+            Instruction {
+                name: "SBC".to_string(),
+                operate: Cpu6502::sbc,
+                addresmode: Cpu6502::imm,
+                cyles: 2,
+            },
+            Instruction {
+                name: "NOP".to_string(),
+                operate: Cpu6502::nop,
+                addresmode: Cpu6502::imp,
+                cyles: 2,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::sbc,
+                addresmode: Cpu6502::imp,
+                cyles: 2,
+            },
+            Instruction {
+                name: "CPX".to_string(),
+                operate: Cpu6502::cpx,
+                addresmode: Cpu6502::abs,
+                cyles: 4,
+            },
+            Instruction {
+                name: "SBC".to_string(),
+                operate: Cpu6502::sbc,
+                addresmode: Cpu6502::abs,
+                cyles: 4,
+            },
+            Instruction {
+                name: "INC".to_string(),
+                operate: Cpu6502::inc,
+                addresmode: Cpu6502::abs,
+                cyles: 6,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 6,
+            },
+            Instruction {
+                name: "BEQ".to_string(),
+                operate: Cpu6502::beq,
+                addresmode: Cpu6502::rel,
+                cyles: 2,
+            },
+            Instruction {
+                name: "SBC".to_string(),
+                operate: Cpu6502::sbc,
+                addresmode: Cpu6502::izy,
+                cyles: 5,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 2,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 8,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::nop,
+                addresmode: Cpu6502::imp,
+                cyles: 4,
+            },
+            Instruction {
+                name: "SBC".to_string(),
+                operate: Cpu6502::sbc,
+                addresmode: Cpu6502::zpx,
+                cyles: 4,
+            },
+            Instruction {
+                name: "INC".to_string(),
+                operate: Cpu6502::inc,
+                addresmode: Cpu6502::zpx,
+                cyles: 6,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 6,
+            },
+            Instruction {
+                name: "SED".to_string(),
+                operate: Cpu6502::sed,
+                addresmode: Cpu6502::imp,
+                cyles: 2,
+            },
+            Instruction {
+                name: "SBC".to_string(),
+                operate: Cpu6502::sbc,
+                addresmode: Cpu6502::aby,
+                cyles: 4,
+            },
+            Instruction {
+                name: "NOP".to_string(),
+                operate: Cpu6502::nop,
+                addresmode: Cpu6502::imp,
+                cyles: 2,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 7,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::nop,
+                addresmode: Cpu6502::imp,
+                cyles: 4,
+            },
+            Instruction {
+                name: "SBC".to_string(),
+                operate: Cpu6502::sbc,
+                addresmode: Cpu6502::abx,
+                cyles: 4,
+            },
+            Instruction {
+                name: "INC".to_string(),
+                operate: Cpu6502::inc,
+                addresmode: Cpu6502::abx,
+                cyles: 7,
+            },
+            Instruction {
+                name: "???".to_string(),
+                operate: Cpu6502::xxx,
+                addresmode: Cpu6502::imp,
+                cyles: 7,
+            },
         ];
 
         Self {
@@ -145,7 +1659,7 @@ impl Cpu6502 {
             addr_rel: 0x00,
             opcode: 0x00,
             cycles: 0x00,
-            lookup: loukup_table
+            lookup: loukup_table,
         }
     }
 
@@ -155,7 +1669,7 @@ impl Cpu6502 {
     // }
 
     // Perform one clock cycle's worth of update
-    pub(crate) fn clock(&mut self){
+    pub(crate) fn clock(&mut self) {
         if self.cycles == 0 {
             self.opcode = self.read(self.pc);
             self.pc += 1;
@@ -166,7 +1680,6 @@ impl Cpu6502 {
             let instru2: &Instruction = &self.lookup[self.opcode as usize];
             let addtion_cycle_2 = (instru2.operate)(self);
 
-
             self.opcode += addtion_cycle_1 & addtion_cycle_2
         }
 
@@ -174,7 +1687,7 @@ impl Cpu6502 {
     }
 
     // Reset Interrupt - Forces CPU into known state
-    pub(crate) fn reset(&mut self){
+    pub(crate) fn reset(&mut self) {
         self.a = 0;
         self.x = 0;
         self.y = 0;
@@ -182,10 +1695,10 @@ impl Cpu6502 {
         self.sr = 0x00 | Flags6502::U;
 
         self.addr_abs = 0xFFFC;
-        let lo:u16 = self.read(self.addr_abs + 0) as u16;
-        let hi:u16 = self.read(self.addr_abs + 1) as u16;
+        let lo: u16 = self.read(self.addr_abs + 0) as u16;
+        let hi: u16 = self.read(self.addr_abs + 1) as u16;
 
-        self.pc =  (hi << 8) | lo;
+        self.pc = (hi << 8) | lo;
 
         self.addr_rel = 0x0000;
         self.addr_abs = 0x0000;
@@ -194,16 +1707,19 @@ impl Cpu6502 {
         self.cycles = 8;
     }
     // Interrupt Request - Executes an instruction at a specific location
-    pub(crate) fn irq(&mut self){
-        if self.GetFlag(Flags6502::I) == 0 {
-            self.write(&(0x0100 + self.sp as u16), &(((self.pc >> 8) & 0x00FF) as u8));
+    pub(crate) fn irq(&mut self) {
+        if self.get_flag(Flags6502::I) == 0 {
+            self.write(
+                &(0x0100 + self.sp as u16),
+                &(((self.pc >> 8) & 0x00FF) as u8),
+            );
             self.sp -= 1;
             self.write(&(0x0100 + self.sp as u16), &((self.pc & 0x00FF) as u8));
             self.sp -= 1;
 
-            self.SetFlag(Flags6502::B, false);
-            self.SetFlag(Flags6502::U, true);
-            self.SetFlag(Flags6502::I, true);
+            self.set_flag(Flags6502::B, false);
+            self.set_flag(Flags6502::U, true);
+            self.set_flag(Flags6502::I, true);
             self.write(&(0x0100 + self.sp as u16), &self.sr.clone());
             self.sp -= 1;
 
@@ -214,18 +1730,20 @@ impl Cpu6502 {
 
             self.cycles = 7
         }
-
     }
     // Non-Maskable Interrupt Request - As above, but cannot be disabled
-    pub(crate) fn nmi(&mut self){
-        self.write(&(0x0100 + self.sp as u16), &(((self.pc >> 8) & 0x00FF) as u8));
+    pub(crate) fn nmi(&mut self) {
+        self.write(
+            &(0x0100 + self.sp as u16),
+            &(((self.pc >> 8) & 0x00FF) as u8),
+        );
         self.sp -= 1;
         self.write(&(0x0100 + self.sp as u16), &((self.pc & 0x00FF) as u8));
         self.sp -= 1;
 
-        self.SetFlag(Flags6502::B, false);
-        self.SetFlag(Flags6502::U, true);
-        self.SetFlag(Flags6502::I, true);
+        self.set_flag(Flags6502::B, false);
+        self.set_flag(Flags6502::U, true);
+        self.set_flag(Flags6502::I, true);
         self.write(&(0x0100 + self.sp as u16), &self.sr.clone());
         self.sp -= 1;
 
@@ -241,35 +1759,28 @@ impl Cpu6502 {
     // BUS CONNECTIVITY
     pub(crate) fn read(&self, addre: u16) -> u8 {
         self.bus.read(&addre, false)
-
     }
 
     fn write(&mut self, addre: &u16, data: &u8) {
         self.bus.write(addre, data)
     }
 
-
     ///////////////////////////////////////////////////////////////////////////////
     // FLAG FUNCTIONS
 
     // Returns the value of a specific bit of the status register
-    fn GetFlag(&mut self, f:u8) -> u8
-    {
-        return if (self.sr & f) > 0 { 1 } else { 0 }
+    fn get_flag(&mut self, f: u8) -> u8 {
+        return if (self.sr & f) > 0 { 1 } else { 0 };
     }
 
     // Sets or clears a specific bit of the status register
-    fn SetFlag(&mut self, f: u8, v:bool)
-    {
+    fn set_flag(&mut self, f: u8, v: bool) {
         if v {
             self.sr |= f;
         } else {
             self.sr &= !f;
         }
-
-
     }
-
 
     ///////////////////////////////////////////////////////////////////////////////
     // ADDRESSING MODES
@@ -297,8 +1808,8 @@ impl Cpu6502 {
     // The instruction expects the next byte to be used as a value, so we'll prep
     // the read address to point to the next byte
     fn imm(&mut self) -> u8 {
-        self.pc += 1;
         self.addr_abs = self.pc;
+        self.pc += 1;
         return 0;
     }
 
@@ -307,10 +1818,10 @@ impl Cpu6502 {
     // a location in first 0xFF bytes of address range. Clearly this only requires
     // one byte instead of the usual two.
     fn zp0(&mut self) -> u8 {
-    self.addr_abs = self.read(self.pc) as u16;
-    self.pc += 1;
-    self.addr_abs &= 0x00FF;
-    return 0;
+        self.addr_abs = self.read(self.pc) as u16;
+        self.pc += 1;
+        self.addr_abs &= 0x00FF;
+        return 0;
     }
 
     // Address Mode: Zero Page with X Offset
@@ -318,10 +1829,10 @@ impl Cpu6502 {
     // is added to the supplied single byte address. This is useful for iterating through
     // ranges within the first page.
     fn zpx(&mut self) -> u8 {
-    self.addr_abs = (self.read(self.pc) + self.x) as u16;
-    self.pc += 1;
-    self.addr_abs &= 0x00FF;
-    0
+        self.addr_abs = (self.read(self.pc) + self.x) as u16;
+        self.pc += 1;
+        self.addr_abs &= 0x00FF;
+        0
     }
 
     // Address Mode: Zero Page with Y Offset
@@ -337,8 +1848,7 @@ impl Cpu6502 {
     // This address mode is exclusive to branch instructions. The address
     // must reside within -128 to +127 of the branch instruction, i.e.
     // you cant directly branch to any address in the addressable range.
-    fn rel(&mut self) -> u8
-    {
+    fn rel(&mut self) -> u8 {
         self.addr_rel = self.read(self.pc) as u16;
         self.pc += 1;
         if (self.addr_rel & 0x80) != 0 {
@@ -349,8 +1859,7 @@ impl Cpu6502 {
 
     // Address Mode: Absolute
     // A full 16-bit address is loaded and used
-    fn abs(&mut self) -> u8
-    {
+    fn abs(&mut self) -> u8 {
         let lo: u16 = self.read(self.pc) as u16;
         self.pc += 1;
         let hi: u16 = self.read(self.pc) as u16;
@@ -381,7 +1890,6 @@ impl Cpu6502 {
         }
     }
 
-
     // Address Mode: Absolute with Y Offset
     // Fundamentally the same as absolute addressing, but the contents of the Y Register
     // is added to the supplied two byte address. If the resulting address changes
@@ -402,7 +1910,6 @@ impl Cpu6502 {
         }
     }
 
-
     // Note: The next 3 address modes use indirection (aka Pointers!)
 
     // Address Mode: Indirect
@@ -421,17 +1928,18 @@ impl Cpu6502 {
 
         let ptr: u16 = (ptr_hi << 8) | ptr_lo;
 
-        if ptr_lo == 0x00FF // Simulate page boundary hardware bug
+        if ptr_lo == 0x00FF
+        // Simulate page boundary hardware bug
         {
-            self.addr_abs = ((self.read(ptr & 0xFF00) as u16) << 8) | (self.read(ptr + 0) as u16) ;
-        } else // Behave normally
+            self.addr_abs = ((self.read(ptr & 0xFF00) as u16) << 8) | (self.read(ptr + 0) as u16);
+        } else
+        // Behave normally
         {
             self.addr_abs = ((self.read(ptr + 1) as u16) << 8) | (self.read(ptr + 0) as u16);
         }
 
         return 0;
     }
-
 
     // Address Mode: Indirect X
     // The supplied 8-bit address is offset by X Register to index
@@ -448,7 +1956,6 @@ impl Cpu6502 {
 
         0
     }
-
 
     // Address Mode: Indirect Y
     // The supplied 8-bit address indexes a location in page 0x00. From
@@ -498,16 +2005,14 @@ impl Cpu6502 {
     // is a variable global to the CPU, and is set by calling this
     // function. It also returns it for convenience.
     fn fetch(&mut self) -> u8 {
-        if !((self.lookup[self.opcode as usize].addresmode) as usize == (Cpu6502::imp) as usize){
+        if (self.lookup[self.opcode as usize].addresmode) as usize != (Cpu6502::imp) as usize {
             self.fetched = self.read(self.addr_abs);
         }
         self.fetched
     }
 
-
     ///////////////////////////////////////////////////////////////////////////////
     // INSTRUCTION IMPLEMENTATIONS
-
 
     // Instruction: Add with Carry In
     // Function:    A = A + M + C
@@ -571,34 +2076,37 @@ impl Cpu6502 {
     //       Positive Number + Positive Number = Positive Result -> OK! No Overflow
     //       Negative Number + Negative Number = Negative Result -> OK! NO Overflow
 
-    fn adc(&mut self) -> u8
-    {
-    // Grab the data that we are adding to the accumulator
-    self.fetch();
+    fn adc(&mut self) -> u8 {
+        // Grab the data that we are adding to the accumulator
+        self.fetch();
 
-    // Add is performed in 16-bit domain for emulation to capture any
-    // carry bit, which will exist in bit 8 of the 16-bit word
-    self.temp = self.a as u16 + self.fetched as u16 + self.GetFlag(Flags6502::C) as u16;
+        // Add is performed in 16-bit domain for emulation to capture any
+        // carry bit, which will exist in bit 8 of the 16-bit word
+        self.temp = self.a as u16 + self.fetched as u16 + self.get_flag(Flags6502::C) as u16;
 
-    // The carry flag out exists in the high byte bit 0
-    self.SetFlag(Flags6502::C, self.temp > 255);
+        // The carry flag out exists in the high byte bit 0
+        self.set_flag(Flags6502::C, self.temp > 255);
 
-    // The Zero flag is set if the result is 0
-    self.SetFlag(Flags6502::Z, (self.temp & 0x00FF) == 0);
+        // The Zero flag is set if the result is 0
+        self.set_flag(Flags6502::Z, (self.temp & 0x00FF) == 0);
 
-    // The signed Overflow flag is set based on all that up there! :D
-    self.SetFlag(Flags6502::V, ((!(self.a as u16 ^ self.fetched as u16) & (self.a as u16 ^ self.temp as u16)) & 0x0080) != 0);
+        // The signed Overflow flag is set based on all that up there! :D
+        self.set_flag(
+            Flags6502::V,
+            ((!(self.a as u16 ^ self.fetched as u16) & (self.a as u16 ^ self.temp as u16))
+                & 0x0080)
+                != 0,
+        );
 
-    // The negative flag is set to the most significant bit of the result
-    self.SetFlag(Flags6502::N, (self.temp & 0x80) != 0);
+        // The negative flag is set to the most significant bit of the result
+        self.set_flag(Flags6502::N, (self.temp & 0x80) != 0);
 
-    // Load the result into the accumulator (it's 8-bit dont forget!)
-    self.a = (self.temp & 0x00FF) as u8;
+        // Load the result into the accumulator (it's 8-bit dont forget!)
+        self.a = (self.temp & 0x00FF) as u8;
 
-    // This instruction has the potential to require an additional clock cycle
-    return 1;
+        // This instruction has the potential to require an additional clock cycle
+        return 1;
     }
-
 
     // Instruction: Subtraction with Borrow In
     // Function:    A = A - M - (1 - C)
@@ -626,23 +2134,25 @@ impl Cpu6502 {
     // of M, the data(!) therfore we can simply add, exactly the same way we did
     // before.
 
-    fn sbc(&mut self) -> u8
-    {
-    self.fetch();
+    fn sbc(&mut self) -> u8 {
+        self.fetch();
 
-    // Operating in 16-bit domain to capture carry out
+        // Operating in 16-bit domain to capture carry out
 
-    // We can invert the bottom 8 bits with bitwise xor
-    let value: u16 = (self.fetched as u16) ^ 0x00FF;
+        // We can invert the bottom 8 bits with bitwise xor
+        let value: u16 = (self.fetched as u16) ^ 0x00FF;
 
-    // Notice this is exactly the same as addition from here!
-    self.temp = self.a as u16 + value + self.GetFlag(Flags6502::C) as u16;
-    self.SetFlag(Flags6502::C, (self.temp & 0xFF00) != 0);
-    self.SetFlag(Flags6502::Z, (self.temp & 0x00FF) == 0);
-    self.SetFlag(Flags6502::V, ((self.temp ^ self.a as u16) & (self.temp ^ value) & 0x0080) != 0);
-    self.SetFlag(Flags6502::N, (self.temp & 0x0080) != 0);
-    self.a = (self.temp & 0x00FF) as u8;
-    return 1;
+        // Notice this is exactly the same as addition from here!
+        self.temp = self.a as u16 + value + self.get_flag(Flags6502::C) as u16;
+        self.set_flag(Flags6502::C, (self.temp & 0xFF00) != 0);
+        self.set_flag(Flags6502::Z, (self.temp & 0x00FF) == 0);
+        self.set_flag(
+            Flags6502::V,
+            ((self.temp ^ self.a as u16) & (self.temp ^ value) & 0x0080) != 0,
+        );
+        self.set_flag(Flags6502::N, (self.temp & 0x0080) != 0);
+        self.a = (self.temp & 0x00FF) as u8;
+        return 1;
     }
 
     // OK! Complicated operations are done! the following are much simpler
@@ -654,46 +2164,40 @@ impl Cpu6502 {
     // 5) Return if instruction has potential to require additional
     //    clock cycle
 
-
     // Instruction: Bitwise Logic AND
-// Function:    A = A & M
-// Flags Out:   N, Z
-    fn and(&mut self) -> u8
-    {
-    self.fetch();
-    self.a = self.a & self.fetched;
-    self.SetFlag(Flags6502::Z, self.a == 0x00);
-    self.SetFlag(Flags6502::N, (self.a & 0x80) != 0);
-    return 1;
+    // Function:    A = A & M
+    // Flags Out:   N, Z
+    fn and(&mut self) -> u8 {
+        self.fetch();
+        self.a = self.a & self.fetched;
+        self.set_flag(Flags6502::Z, self.a == 0x00);
+        self.set_flag(Flags6502::N, (self.a & 0x80) != 0);
+        return 1;
     }
-
 
     // Instruction: Arithmetic Shift Left
     // Function:    A = C <- (A << 1) <- 0
     // Flags Out:   N, Z, C
-    fn asl(&mut self) -> u8
-    {
-    self.fetch();
-    self.temp = (self.fetched as u16) << 1;
-    self.SetFlag(Flags6502::C, (self.temp & 0xFF00) > 0);
-    self.SetFlag(Flags6502::Z, (self.temp & 0x00FF) == 0x00);
-    self.SetFlag(Flags6502::N, (self.temp & 0x80) != 0);
-    if self.lookup[self.opcode as usize].addresmode as usize == Cpu6502::imp as usize {
-        self.a = (self.temp & 0x00FF) as u8;
-    } else {
-        let addr = &self.addr_abs.clone();
-        let v: u8 = (self.temp & 0x00FF) as u8;
-        self.write( addr, &v);
+    fn asl(&mut self) -> u8 {
+        self.fetch();
+        self.temp = (self.fetched as u16) << 1;
+        self.set_flag(Flags6502::C, (self.temp & 0xFF00) > 0);
+        self.set_flag(Flags6502::Z, (self.temp & 0x00FF) == 0x00);
+        self.set_flag(Flags6502::N, (self.temp & 0x80) != 0);
+        if self.lookup[self.opcode as usize].addresmode as usize == Cpu6502::imp as usize {
+            self.a = (self.temp & 0x00FF) as u8;
+        } else {
+            let addr = &self.addr_abs.clone();
+            let v: u8 = (self.temp & 0x00FF) as u8;
+            self.write(addr, &v);
+        }
+        return 0;
     }
-    return 0;
-    }
-
 
     // Instruction: Branch if Carry Clear
     // Function:    if(C == 0) pc = address
-    fn bcc(&mut self) -> u8
-    {
-        if self.GetFlag(Flags6502::C) == 0 {
+    fn bcc(&mut self) -> u8 {
+        if self.get_flag(Flags6502::C) == 0 {
             self.cycles += 1;
             self.addr_abs = self.pc + self.addr_rel;
 
@@ -705,14 +2209,11 @@ impl Cpu6502 {
         }
         0
     }
-
 
     // Instruction: Branch if Carry Set
     // Function:    if(C == 1) pc = address
-    fn bcs(&mut self) -> u8
-    {
-        if self.GetFlag(Flags6502::C) == 1
-        {
+    fn bcs(&mut self) -> u8 {
+        if self.get_flag(Flags6502::C) == 1 {
             self.cycles += 1;
             self.addr_abs = self.pc + self.addr_rel;
 
@@ -724,13 +2225,10 @@ impl Cpu6502 {
         return 0;
     }
 
-
     // Instruction: Branch if Equal
     // Function:    if(Z == 1) pc = address
-    fn beq(&mut self) -> u8
-    {
-        if self.GetFlag(Flags6502::Z) == 1
-        {
+    fn beq(&mut self) -> u8 {
+        if self.get_flag(Flags6502::Z) == 1 {
             self.cycles += 1;
             self.addr_abs = self.pc + self.addr_rel;
 
@@ -742,23 +2240,19 @@ impl Cpu6502 {
         0
     }
 
-    fn bit(&mut self) -> u8
-    {
-    self.fetch();
-    self.temp = (self.a & self.fetched) as u16;
-    self.SetFlag(Flags6502::Z, (self.temp & 0x00FF) == 0x00);
-    self.SetFlag(Flags6502::N, (self.fetched & (1 << 7)) != 0);
-    self.SetFlag(Flags6502::V, (self.fetched & (1 << 6)) != 0);
-    0
+    fn bit(&mut self) -> u8 {
+        self.fetch();
+        self.temp = (self.a & self.fetched) as u16;
+        self.set_flag(Flags6502::Z, (self.temp & 0x00FF) == 0x00);
+        self.set_flag(Flags6502::N, (self.fetched & (1 << 7)) != 0);
+        self.set_flag(Flags6502::V, (self.fetched & (1 << 6)) != 0);
+        0
     }
-
 
     // Instruction: Branch if Negative
     // Function:    if(N == 1) pc = address
-    fn bmi(&mut self) -> u8
-    {
-        if self.GetFlag(Flags6502::N) == 1
-        {
+    fn bmi(&mut self) -> u8 {
+        if self.get_flag(Flags6502::N) == 1 {
             self.cycles += 1;
             self.addr_abs = self.pc + self.addr_rel;
 
@@ -769,16 +2263,14 @@ impl Cpu6502 {
         }
         return 0;
     }
-
 
     // Instruction: Branch if Not Equal
     // Function:    if(Z == 0) pc = address
-    fn bne(&mut self) -> u8
-    {
-        if self.GetFlag(Flags6502::Z) == 0
-        {
+    fn bne(&mut self) -> u8 {
+        if self.get_flag(Flags6502::Z) == 0 {
             self.cycles += 1;
-            self.addr_abs = self.pc + self.addr_rel;
+
+            self.addr_abs = self.pc.overflowing_add(self.addr_rel).0;
 
             if (self.addr_abs & 0xFF00) != (self.pc & 0xFF00) {
                 self.cycles += 1;
@@ -788,20 +2280,16 @@ impl Cpu6502 {
         return 0;
     }
 
-
     // Instruction: Branch if Positive
     // Function:    if(N == 0) pc = address
-    fn bpl(&mut self) -> u8
-    {
-        if self.GetFlag(Flags6502::N) == 0
-        {
+    fn bpl(&mut self) -> u8 {
+        if self.get_flag(Flags6502::N) == 0 {
             self.cycles += 1;
             self.addr_abs = self.pc + self.addr_rel;
 
             if (self.addr_abs & 0xFF00) != (self.pc & 0xFF00) {
                 self.cycles += 1;
             }
-
 
             self.pc = self.addr_abs;
         }
@@ -810,34 +2298,33 @@ impl Cpu6502 {
 
     // Instruction: Break
     // Function:    Program Sourced Interrupt
-    
-    fn brk(&mut self) -> u8
-    {
+
+    fn brk(&mut self) -> u8 {
         self.pc += 1;
 
-        self.SetFlag(Flags6502::I, true);
-        self.write(&(0x0100 + self.sp as u16), &(((self.pc >> 8) & 0x00FF) as u8));
+        self.set_flag(Flags6502::I, true);
+        self.write(
+            &(0x0100 + self.sp as u16),
+            &(((self.pc >> 8) & 0x00FF) as u8),
+        );
         self.sp -= 1;
         self.write(&(0x0100 + self.sp as u16), &((self.pc & 0x00FF) as u8));
         self.sp -= 1;
 
-        self.SetFlag(Flags6502::B, true);
+        self.set_flag(Flags6502::B, true);
 
         self.write(&(0x0100 + self.sp as u16), &self.sr.clone());
         self.sp -= 1;
-        self.SetFlag(Flags6502::B, false);
+        self.set_flag(Flags6502::B, false);
 
         self.pc = self.read(0xFFFE) as u16 | ((self.read(0xFFFF) as u16) << 8);
         return 0;
     }
 
-
     // Instruction: Branch if Overflow Clear
     // Function:    if(V == 0) pc = address
-    fn bvc(&mut self) -> u8
-    {
-        if self.GetFlag(Flags6502::V) == 0
-        {
+    fn bvc(&mut self) -> u8 {
+        if self.get_flag(Flags6502::V) == 0 {
             self.cycles += 1;
             self.addr_abs = self.pc + self.addr_rel;
 
@@ -849,14 +2336,11 @@ impl Cpu6502 {
         }
         return 0;
     }
-
 
     // Instruction: Branch if Overflow Set
     // Function:    if(V == 1) pc = address
-    fn bvs(&mut self) -> u8
-    {
-        if self.GetFlag(Flags6502::V) == 1
-        {
+    fn bvs(&mut self) -> u8 {
+        if self.get_flag(Flags6502::V) == 1 {
             self.cycles += 1;
             self.addr_abs = self.pc + self.addr_rel;
 
@@ -868,190 +2352,162 @@ impl Cpu6502 {
         return 0;
     }
 
-
     // Instruction: Clear Carry Flag
     // Function:    C = 0
-    fn clc(&mut self) -> u8
-    {
-        self.SetFlag(Flags6502::C, false);
+    fn clc(&mut self) -> u8 {
+        self.set_flag(Flags6502::C, false);
         return 0;
     }
-
 
     // Instruction: Clear Decimal Flag
     // Function:    D = 0
-    fn cld(&mut self) -> u8
-    {
-        self.SetFlag(Flags6502::D, false);
+    fn cld(&mut self) -> u8 {
+        self.set_flag(Flags6502::D, false);
         return 0;
     }
-
 
     // Instruction: Disable Interrupts / Clear Interrupt Flag
     // Function:    I = 0
-    fn cli(&mut self) -> u8
-    {
-        self.SetFlag(Flags6502::I, false);
+    fn cli(&mut self) -> u8 {
+        self.set_flag(Flags6502::I, false);
         return 0;
     }
 
-
     // Instruction: Clear Overflow Flag
     // Function:    V = 0
-    fn clv(&mut self) -> u8
-    {
-        self.SetFlag(Flags6502::V, false);
+    fn clv(&mut self) -> u8 {
+        self.set_flag(Flags6502::V, false);
         return 0;
     }
 
     // Instruction: Compare Accumulator
     // Function:    C <- A >= M      Z <- (A - M) == 0
     // Flags Out:   N, C, Z
-    fn cmp(&mut self) -> u8
-    {
+    fn cmp(&mut self) -> u8 {
         self.fetch();
         self.temp = self.a as u16 - self.fetched as u16;
-        self.SetFlag(Flags6502::C, self.a >= self.fetched);
-        self.SetFlag(Flags6502::Z, (self.temp & 0x00FF) == 0x0000);
-        self.SetFlag(Flags6502::N, (self.temp & 0x0080) != 0);
+        self.set_flag(Flags6502::C, self.a >= self.fetched);
+        self.set_flag(Flags6502::Z, (self.temp & 0x00FF) == 0x0000);
+        self.set_flag(Flags6502::N, (self.temp & 0x0080) != 0);
         return 1;
     }
-
 
     // Instruction: Compare X Register
     // Function:    C <- X >= M      Z <- (X - M) == 0
     // Flags Out:   N, C, Z
-    fn cpx(&mut self) -> u8
-    {
+    fn cpx(&mut self) -> u8 {
         self.fetch();
         self.temp = self.x as u16 - self.fetched as u16;
-        self.SetFlag(Flags6502::C, self.x >= self.fetched);
-        self.SetFlag(Flags6502::Z, (self.temp & 0x00FF) == 0x0000);
-        self.SetFlag(Flags6502::N, (self.temp & 0x0080) != 0);
+        self.set_flag(Flags6502::C, self.x >= self.fetched);
+        self.set_flag(Flags6502::Z, (self.temp & 0x00FF) == 0x0000);
+        self.set_flag(Flags6502::N, (self.temp & 0x0080) != 0);
         return 0;
     }
-
 
     // Instruction: Compare Y Register
     // Function:    C <- Y >= M      Z <- (Y - M) == 0
     // Flags Out:   N, C, Z
-    fn cpy(&mut self) -> u8
-    {
+    fn cpy(&mut self) -> u8 {
         self.fetch();
         self.temp = self.y as u16 - self.fetched as u16;
-        self.SetFlag(Flags6502::C, self.y >= self.fetched);
-        self.SetFlag(Flags6502::Z, (self.temp & 0x00FF) == 0x0000);
-        self.SetFlag(Flags6502::N, (self.temp & 0x0080) != 0);
+        self.set_flag(Flags6502::C, self.y >= self.fetched);
+        self.set_flag(Flags6502::Z, (self.temp & 0x00FF) == 0x0000);
+        self.set_flag(Flags6502::N, (self.temp & 0x0080) != 0);
         return 0;
     }
-
 
     // Instruction: Decrement Value at Memory Location
     // Function:    M = M - 1
     // Flags Out:   N, Z
-    fn dec(&mut self) -> u8
-    {
+    fn dec(&mut self) -> u8 {
         self.fetch();
         self.temp = (self.fetched - 1) as u16;
         self.write(&self.addr_abs.clone(), &((self.temp & 0x00FF) as u8));
-        self.SetFlag(Flags6502::Z, (self.temp & 0x00FF) == 0x0000);
-        self.SetFlag(Flags6502::N, (self.temp & 0x0080) != 0);
+        self.set_flag(Flags6502::Z, (self.temp & 0x00FF) == 0x0000);
+        self.set_flag(Flags6502::N, (self.temp & 0x0080) != 0);
         return 0;
     }
-
 
     // Instruction: Decrement X Register
     // Function:    X = X - 1
     // Flags Out:   N, Z
-    fn dex(&mut self) -> u8
-    {
+    fn dex(&mut self) -> u8 {
         self.x -= 1;
-        self.SetFlag(Flags6502::Z, self.x == 0x00);
-        self.SetFlag(Flags6502::N, (self.x & 0x80) != 0);
+        self.set_flag(Flags6502::Z, self.x == 0x00);
+        self.set_flag(Flags6502::N, (self.x & 0x80) != 0);
         return 0;
     }
-
 
     // Instruction: Decrement Y Register
     // Function:    Y = Y - 1
     // Flags Out:   N, Z
-    fn dey(&mut self) -> u8
-    {
+    fn dey(&mut self) -> u8 {
         self.y -= 1;
-        self.SetFlag(Flags6502::Z, self.y == 0x00);
-        self.SetFlag(Flags6502::N, (self.y & 0x80) != 0);
+        self.set_flag(Flags6502::Z, self.y == 0x00);
+        self.set_flag(Flags6502::N, (self.y & 0x80) != 0);
         return 0;
     }
-
 
     // Instruction: Bitwise Logic XOR
     // Function:    A = A xor M
     // Flags Out:   N, Z
-    fn eor(&mut self) -> u8
-    {
+    fn eor(&mut self) -> u8 {
         self.fetch();
         self.a = self.a ^ self.fetched;
-        self.SetFlag(Flags6502::Z, self.a == 0x00);
-        self.SetFlag(Flags6502::N, (self.a & 0x80) != 0);
+        self.set_flag(Flags6502::Z, self.a == 0x00);
+        self.set_flag(Flags6502::N, (self.a & 0x80) != 0);
         return 1;
     }
-
 
     // Instruction: Increment Value at Memory Location
     // Function:    M = M + 1
     // Flags Out:   N, Z
-    fn inc(&mut self) -> u8
-    {
+    fn inc(&mut self) -> u8 {
         self.fetch();
         self.temp = (self.fetched + 1) as u16;
-        self.write(&self.addr_abs.clone(), &((self.temp & 0x00FF)as u8));
-        self.SetFlag(Flags6502::Z, (self.temp & 0x00FF) == 0x0000);
-        self.SetFlag(Flags6502::N, (self.temp & 0x0080) != 0);
+        self.write(&self.addr_abs.clone(), &((self.temp & 0x00FF) as u8));
+        self.set_flag(Flags6502::Z, (self.temp & 0x00FF) == 0x0000);
+        self.set_flag(Flags6502::N, (self.temp & 0x0080) != 0);
         return 0;
     }
-
 
     // Instruction: Increment X Register
     // Function:    X = X + 1
     // Flags Out:   N, Z
-    fn inx(&mut self) -> u8
-    {
+    fn inx(&mut self) -> u8 {
         self.x += 1;
-        self.SetFlag(Flags6502::Z, self.x == 0x00);
-        self.SetFlag(Flags6502::N, (self.x & 0x80) != 0x00);
+        self.set_flag(Flags6502::Z, self.x == 0x00);
+        self.set_flag(Flags6502::N, (self.x & 0x80) != 0x00);
         return 0;
     }
-
 
     // Instruction: Increment Y Register
     // Function:    Y = Y + 1
     // Flags Out:   N, Z
-    fn iny(&mut self) -> u8
-    {
+    fn iny(&mut self) -> u8 {
         self.y += 1;
-        self.SetFlag(Flags6502::Z, self.y == 0x00);
-        self.SetFlag(Flags6502::N, (self.y & 0x80) != 0x00);
+        self.set_flag(Flags6502::Z, self.y == 0x00);
+        self.set_flag(Flags6502::N, (self.y & 0x80) != 0x00);
         return 0;
     }
 
-
     // Instruction: Jump To Location
     // Function:    pc = address
-    fn jmp(&mut self) -> u8
-    {
+    fn jmp(&mut self) -> u8 {
         self.pc = self.addr_abs;
         return 0;
     }
 
-
     // Instruction: Jump To Sub-Routine
     // Function:    Push current pc to stack, pc = address
-    
-    fn jsr(&mut self) -> u8
-    {
+
+    fn jsr(&mut self) -> u8 {
         self.pc -= 1;
 
-        self.write(&(0x0100 + self.sp as u16), &(((self.pc >> 8) & 0x00FF) as u8));
+        self.write(
+            &(0x0100 + self.sp as u16),
+            &(((self.pc >> 8) & 0x00FF) as u8),
+        );
         self.sp -= 1;
         self.write(&(0x0100 + self.sp as u16), &((self.pc & 0x00FF) as u8));
         self.sp -= 1;
@@ -1060,52 +2516,45 @@ impl Cpu6502 {
         return 0;
     }
 
-
     // Instruction: Load The Accumulator
     // Function:    A = M
     // Flags Out:   N, Z
-    fn lda(&mut self) -> u8
-    {
+    fn lda(&mut self) -> u8 {
         self.fetch();
         self.a = self.fetched;
-        self.SetFlag(Flags6502::Z, self.a == 0x00);
-        self.SetFlag(Flags6502::N, (self.a & 0x80) != 0x00);
+        self.set_flag(Flags6502::Z, self.a == 0x00);
+        self.set_flag(Flags6502::N, (self.a & 0x80) != 0x00);
         return 1;
     }
-
 
     // Instruction: Load The X Register
     // Function:    X = M
     // Flags Out:   N, Z
-    fn ldx(&mut self) -> u8
-    {
+    fn ldx(&mut self) -> u8 {
         self.fetch();
         self.x = self.fetched;
-        self.SetFlag(Flags6502::Z, self.x == 0x00);
-        self.SetFlag(Flags6502::N, (self.x & 0x80) != 0x00);
+        self.set_flag(Flags6502::Z, self.x == 0x00);
+        self.set_flag(Flags6502::N, (self.x & 0x80) != 0x00);
         return 1;
     }
-
 
     // Instruction: Load The Y Register
     // Function:    Y = M
     // Flags Out:   N, Z
-    fn ldy(&mut self) -> u8
-    {
+    fn ldy(&mut self) -> u8 {
         self.fetch();
         self.y = self.fetched;
-        self.SetFlag(Flags6502::Z, self.y == 0x00);
-        self.SetFlag(Flags6502::N, (self.y & 0x80) != 0);
+        self.set_flag(Flags6502::Z, self.y == 0x00);
+        self.set_flag(Flags6502::N, (self.y & 0x80) != 0);
         return 1;
     }
 
-    fn lsr(&mut self) -> u8
-    {
+    fn lsr(&mut self) -> u8 {
         self.fetch();
-        self.SetFlag(Flags6502::C, (self.fetched & 0x0001) != 0);
+        self.set_flag(Flags6502::C, (self.fetched & 0x0001) != 0);
         self.temp = (self.fetched >> 1) as u16;
-        self.SetFlag(Flags6502::Z, (self.temp & 0x00FF) == 0x0000);
-        self.SetFlag(Flags6502::N, (self.temp & 0x0080) != 0);
+        self.set_flag(Flags6502::Z, (self.temp & 0x00FF) == 0x0000);
+        self.set_flag(Flags6502::N, (self.temp & 0x0080) != 0);
         if self.lookup[self.opcode as usize].addresmode as usize == Cpu6502::imp as usize {
             self.a = (self.temp & 0x00FF) as u8;
         } else {
@@ -1114,8 +2563,7 @@ impl Cpu6502 {
         return 0;
     }
 
-    fn nop(&mut self) -> u8
-    {
+    fn nop(&mut self) -> u8 {
         // Sadly not all NOPs are equal, Ive added a few here
         // based on https://wiki.nesdev.com/w/index.php/CPU_unofficial_opcodes
         // and will add more based on game compatibility, and ultimately
@@ -1127,81 +2575,73 @@ impl Cpu6502 {
             0x7C => 1,
             0xDC => 1,
             0xFC => 1,
-            _ => 0
+            _ => 0,
         }
     }
-
 
     // Instruction: Bitwise Logic OR
     // Function:    A = A | M
     // Flags Out:   N, Z
-    fn ora(&mut self) -> u8
-    {
+    fn ora(&mut self) -> u8 {
         self.fetch();
         self.a = self.a | self.fetched;
-        self.SetFlag(Flags6502::Z, self.a == 0x00);
-        self.SetFlag(Flags6502::N, (self.a & 0x80) != 0);
+        self.set_flag(Flags6502::Z, self.a == 0x00);
+        self.set_flag(Flags6502::N, (self.a & 0x80) != 0);
         return 1;
     }
 
-
     // Instruction: Push Accumulator to Stack
     // Function:    A -> stack
-    
-    fn pha(&mut self) -> u8
-    {
+
+    fn pha(&mut self) -> u8 {
         self.write(&(0x0100 + self.sp as u16), &self.a.clone());
         self.sp -= 1;
         return 0;
     }
 
-
     // Instruction: Push Status Register to Stack
     // Function:    status -> stack
     // Note:        Break flag is set to 1 before push
-    
-    fn php(&mut self) -> u8
-    {
-        self.write(&(0x0100 + self.sp as u16), &(self.sr | Flags6502::B | Flags6502::U));
-        self.SetFlag(Flags6502::B, false);
-        self.SetFlag(Flags6502::U, false);
+
+    fn php(&mut self) -> u8 {
+        self.write(
+            &(0x0100 + self.sp as u16),
+            &(self.sr | Flags6502::B | Flags6502::U),
+        );
+        self.set_flag(Flags6502::B, false);
+        self.set_flag(Flags6502::U, false);
         self.sp -= 1;
         return 0;
     }
 
-
     // Instruction: Pop Accumulator off Stack
     // Function:    A <- stack
     // Flags Out:   N, Z
-    
-    fn pla(&mut self) -> u8
-    {
+
+    fn pla(&mut self) -> u8 {
         self.sp += 1;
         self.a = self.read(0x0100 + self.sp as u16);
-        self.SetFlag(Flags6502::Z, self.a == 0x00);
-        self.SetFlag(Flags6502::N, (self.a & 0x80) != 0x00);
+        self.set_flag(Flags6502::Z, self.a == 0x00);
+        self.set_flag(Flags6502::N, (self.a & 0x80) != 0x00);
         return 0;
     }
-
 
     // Instruction: Pop Status Register off Stack
     // Function:    Status <- stack
-    
-    fn plp(&mut self) -> u8
-    {
+
+    fn plp(&mut self) -> u8 {
         self.sp += 1;
         self.sr = self.read(0x0100 + self.sp as u16);
-        self.SetFlag(Flags6502::U, true);
+        self.set_flag(Flags6502::U, true);
         return 0;
     }
 
-    fn rol(&mut self) -> u8
-    {
+    fn rol(&mut self) -> u8 {
         self.fetch();
-        self.temp = (self.fetched << 1) as u16 | (self.GetFlag(Flags6502::C) as u16);
-        self.SetFlag(Flags6502::C, (self.temp & 0xFF00) != 0);
-        self.SetFlag(Flags6502::Z, (self.temp & 0x00FF) == 0x0000);
-        self.SetFlag(Flags6502::N, (self.temp & 0x0080) != 0);
+        self.temp = (self.fetched << 1) as u16 | (self.get_flag(Flags6502::C) as u16);
+        self.set_flag(Flags6502::C, (self.temp & 0xFF00) != 0);
+        self.set_flag(Flags6502::Z, (self.temp & 0x00FF) == 0x0000);
+        self.set_flag(Flags6502::N, (self.temp & 0x0080) != 0);
         if self.lookup[self.opcode as usize].addresmode as usize == Cpu6502::imp as usize {
             self.a = (self.temp & 0x00FF) as u8;
         } else {
@@ -1210,13 +2650,12 @@ impl Cpu6502 {
         return 0;
     }
 
-    fn ror(&mut self) -> u8
-    {
+    fn ror(&mut self) -> u8 {
         self.fetch();
-        self.temp =((self.GetFlag(Flags6502::C) << 7) | (self.fetched >> 1)) as u16;
-        self.SetFlag(Flags6502::C, (self.fetched & 0x01) != 0);
-        self.SetFlag(Flags6502::Z, (self.temp & 0x00FF) == 0x00);
-        self.SetFlag(Flags6502::N, (self.temp & 0x0080) != 0);
+        self.temp = ((self.get_flag(Flags6502::C) << 7) | (self.fetched >> 1)) as u16;
+        self.set_flag(Flags6502::C, (self.fetched & 0x01) != 0);
+        self.set_flag(Flags6502::Z, (self.temp & 0x00FF) == 0x00);
+        self.set_flag(Flags6502::N, (self.temp & 0x0080) != 0);
         if self.lookup[self.opcode as usize].addresmode as usize == Cpu6502::imp as usize {
             self.a = (self.temp & 0x00FF) as u8;
         } else {
@@ -1225,9 +2664,7 @@ impl Cpu6502 {
         return 0;
     }
 
-    
-    fn rti(&mut self) -> u8
-    {
+    fn rti(&mut self) -> u8 {
         self.sp += 1;
         self.sr = self.read(0x0100 + self.sp as u16);
         self.sr &= !Flags6502::B;
@@ -1240,9 +2677,7 @@ impl Cpu6502 {
         return 0;
     }
 
-    
-    fn rts(&mut self) -> u8
-    {
+    fn rts(&mut self) -> u8 {
         self.sp += 1;
         self.pc = self.read(0x0100 + self.sp as u16) as u16;
         self.sp += 1;
@@ -1252,144 +2687,240 @@ impl Cpu6502 {
         return 0;
     }
 
-
-
-
     // Instruction: Set Carry Flag
     // Function:    C = 1
-    fn sec(&mut self) -> u8
-    {
-        self.SetFlag(Flags6502::C, true);
+    fn sec(&mut self) -> u8 {
+        self.set_flag(Flags6502::C, true);
         return 0;
     }
-
 
     // Instruction: Set Decimal Flag
     // Function:    D = 1
-    fn sed(&mut self) -> u8
-    {
-        self.SetFlag(Flags6502::D, true);
+    fn sed(&mut self) -> u8 {
+        self.set_flag(Flags6502::D, true);
         return 0;
     }
-
 
     // Instruction: Set Interrupt Flag / Enable Interrupts
     // Function:    I = 1
-    fn sei(&mut self) -> u8
-    {
-        self.SetFlag(Flags6502::I, true);
+    fn sei(&mut self) -> u8 {
+        self.set_flag(Flags6502::I, true);
         return 0;
     }
 
-
     // Instruction: Store Accumulator at Address
     // Function:    M = A
-    fn sta(&mut self) -> u8
-    {
+    fn sta(&mut self) -> u8 {
         self.write(&self.addr_abs.clone(), &self.a.clone());
         return 0;
     }
 
-
     // Instruction: Store X Register at Address
     // Function:    M = X
-    fn stx(&mut self) -> u8
-    {
+    fn stx(&mut self) -> u8 {
         self.write(&self.addr_abs.clone(), &self.x.clone());
         return 0;
     }
 
-
     // Instruction: Store Y Register at Address
     // Function:    M = Y
-    fn sty(&mut self) -> u8
-    {
+    fn sty(&mut self) -> u8 {
         self.write(&self.addr_abs.clone(), &self.y.clone());
         return 0;
     }
 
-
     // Instruction: Transfer Accumulator to X Register
     // Function:    X = A
     // Flags Out:   N, Z
-    fn tax(&mut self) -> u8
-    {
+    fn tax(&mut self) -> u8 {
         self.x = self.a;
-        self.SetFlag(Flags6502::Z, self.x == 0x00);
-        self.SetFlag(Flags6502::N, (self.x & 0x80) != 0);
+        self.set_flag(Flags6502::Z, self.x == 0x00);
+        self.set_flag(Flags6502::N, (self.x & 0x80) != 0);
         return 0;
     }
-
 
     // Instruction: Transfer Accumulator to Y Register
     // Function:    Y = A
     // Flags Out:   N, Z
-    fn tay(&mut self) -> u8
-    {
+    fn tay(&mut self) -> u8 {
         self.y = self.a;
-        self.SetFlag(Flags6502::Z, self.y == 0x00);
-        self.SetFlag(Flags6502::N, (self.y & 0x80) != 0);
+        self.set_flag(Flags6502::Z, self.y == 0x00);
+        self.set_flag(Flags6502::N, (self.y & 0x80) != 0);
         return 0;
     }
-
 
     // Instruction: Transfer Stack Pointer to X Register
     // Function:    X = stack pointer
     // Flags Out:   N, Z
-    fn tsx(&mut self) -> u8
-    {
+    fn tsx(&mut self) -> u8 {
         self.x = self.sp;
-        self.SetFlag(Flags6502::Z, self.x == 0x00);
-        self.SetFlag(Flags6502::N, (self.x & 0x80) != 0);
+        self.set_flag(Flags6502::Z, self.x == 0x00);
+        self.set_flag(Flags6502::N, (self.x & 0x80) != 0);
         return 0;
     }
-
 
     // Instruction: Transfer X Register to Accumulator
     // Function:    A = X
     // Flags Out:   N, Z
-    fn txa(&mut self) -> u8
-    {
+    fn txa(&mut self) -> u8 {
         self.a = self.x;
-        self.SetFlag(Flags6502::Z, self.a == 0x00);
-        self.SetFlag(Flags6502::N, (self.a & 0x80) != 0);
+        self.set_flag(Flags6502::Z, self.a == 0x00);
+        self.set_flag(Flags6502::N, (self.a & 0x80) != 0);
         return 0;
     }
 
-
     // Instruction: Transfer X Register to Stack Pointer
     // Function:    stack pointer = X
-    fn txs(&mut self) -> u8
-    {
+    fn txs(&mut self) -> u8 {
         self.sp = self.x;
         return 0;
     }
 
-
     // Instruction: Transfer Y Register to Accumulator
     // Function:    A = Y
     // Flags Out:   N, Z
-    fn tya(&mut self) -> u8
-    {
+    fn tya(&mut self) -> u8 {
         self.a = self.y;
-        self.SetFlag(Flags6502::Z, self.a == 0x00);
-        self.SetFlag(Flags6502::N, (self.a & 0x80) != 0);
+        self.set_flag(Flags6502::Z, self.a == 0x00);
+        self.set_flag(Flags6502::N, (self.a & 0x80) != 0);
         return 0;
     }
-
 
     // This function captures illegal opcodes
-    fn xxx(&mut self) -> u8
-    {
+    fn xxx(&mut self) -> u8 {
         return 0;
     }
 
-///////////////////////////////////////////////////////////////////////////////
-// HELPER FUNCTIONS
+    ///////////////////////////////////////////////////////////////////////////////
+    // HELPER FUNCTIONS
+
+    fn hex(n: u32, d: u8) -> String {
+        let char_arra: [char; 16] = [
+            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F',
+        ];
+        let mut nc = n;
+        let mut sf: String = "".to_string();
+        for _ in (0..d).rev() {
+            sf = char_arra[(&nc & 0xF) as usize].to_string().add(&sf);
+            nc >>= 4;
+        }
+        return sf;
+    }
 
     pub(crate) fn complete(&self) -> bool {
         return self.cycles == 0;
     }
 
+    pub(crate) fn disassemble(&self, n_start: u16, n_stop: u16) -> HashMap<u16, String> {
+        let mut addr: u32 = n_start.clone() as u32;
 
+        let mut value: u8;
+        let mut hi: u8;
+        let mut lo: u8;
+        let mut map_lines: HashMap<u16, String> = HashMap::new();
+        let mut v_s: String;
+
+        while addr <= n_stop as u32 {
+            let line_addr = addr.clone() as u16;
+            let opcode = self.bus.read(&(addr as u16), true) as usize;
+            let mut s_inst: String = format!(
+                "${}: {} ",
+                Cpu6502::hex(addr as u32, 4),
+                self.lookup[opcode.clone()].name
+            );
+            let addremode = self.lookup[opcode.clone()].addresmode as usize;
+            addr += 1;
+
+            if addremode == Cpu6502::imp as usize {
+                s_inst = s_inst.add(" {IMP}");
+            } else if addremode == Cpu6502::imm as usize {
+                value = self.read(addr as u16);
+                addr += 1;
+                v_s = format!("#${} {{IMM}}", Cpu6502::hex(value as u32, 2));
+                s_inst = s_inst.add(&v_s);
+            } else if addremode == Cpu6502::zp0 as usize {
+                lo = self.read(addr as u16);
+                addr += 1;
+                // hi = 0x00;
+                v_s = format!("${} {{ZP0}}", Cpu6502::hex(lo as u32, 2));
+                s_inst = s_inst.add(&v_s);
+            } else if addremode == Cpu6502::zpx as usize {
+                lo = self.read(addr as u16);
+                addr += 1;
+                // hi = 0x00;
+                v_s = format!("${}, X {{ZPX}}", Cpu6502::hex(lo as u32, 2));
+                s_inst = s_inst.add(&v_s);
+            } else if addremode == Cpu6502::zpy as usize {
+                lo = self.read(addr as u16);
+                addr += 1;
+                // hi = 0x00;
+                v_s = format!("${}, Y {{ZPY}}", Cpu6502::hex(lo as u32, 2));
+                s_inst = s_inst.add(&v_s);
+            } else if addremode == Cpu6502::izx as usize {
+                lo = self.read(addr as u16);
+                addr += 1;
+                // hi = 0x00;
+                v_s = format!("(${}, X) {{IZX}}", Cpu6502::hex(lo as u32, 2));
+                s_inst = s_inst.add(&v_s);
+            } else if addremode == Cpu6502::izy as usize {
+                lo = self.read(addr as u16);
+                addr += 1;
+                // hi = 0x00;
+                v_s = format!("(${}), Y {{IZY}}", Cpu6502::hex(lo as u32, 2));
+                s_inst = s_inst.add(&v_s);
+            } else if addremode == Cpu6502::abs as usize {
+                lo = self.read(addr as u16);
+                addr += 1;
+                hi = self.read(addr as u16);
+                addr += 1;
+                v_s = format!("${} {{ABS}}", Cpu6502::hex((hi as u32) << 8 | lo as u32, 4));
+                s_inst = s_inst.add(&v_s);
+            } else if addremode == Cpu6502::abx as usize {
+                lo = self.read(addr as u16);
+                addr += 1;
+                hi = self.read(addr as u16);
+                addr += 1;
+                v_s = format!(
+                    "${}, X {{ABX}}",
+                    Cpu6502::hex((hi as u32) << 8 | lo as u32, 4)
+                );
+                s_inst = s_inst.add(&v_s);
+            } else if addremode == Cpu6502::aby as usize {
+                lo = self.read(addr as u16);
+                addr += 1;
+                hi = self.read(addr as u16);
+                addr += 1;
+                v_s = format!(
+                    "${}, Y {{ABY}}",
+                    Cpu6502::hex((hi as u32) << 8 | lo as u32, 4)
+                );
+                s_inst = s_inst.add(&v_s);
+            } else if addremode == Cpu6502::ind as usize {
+                lo = self.read(addr as u16);
+                addr += 1;
+                hi = self.read(addr as u16);
+                addr += 1;
+                v_s = format!(
+                    "(${}) {{IND}}",
+                    Cpu6502::hex((hi as u32) << 8 | lo as u32, 4)
+                );
+                s_inst = s_inst.add(&v_s);
+            } else if addremode == Cpu6502::rel as usize {
+                value = self.read(addr as u16);
+                addr += 1;
+                v_s = format!(
+                    "${} [${}] {{REL}}",
+                    Cpu6502::hex(value as u32, 2),
+                    Cpu6502::hex(addr + value as u32, 4)
+                );
+                s_inst = s_inst.add(&v_s);
+            } else {
+                panic!("not enter ifs")
+            }
+
+            map_lines.insert(line_addr, s_inst);
+        }
+
+        map_lines
+    }
 }
